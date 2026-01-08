@@ -31,7 +31,11 @@ class AppServiceProvider extends ServiceProvider
 
         \Validator::extend('exists_tenant', function ($attribute, $value, $parameters, $validator) {
             $model = $parameters[0]; // e.g., Category::class
-            return $model::where('tenant_id', tenant('id'))->where('id', $value)->exists();
+            $tenantId = tenant('id');
+            if (!$tenantId) {
+                return false;
+            }
+            return $model::where('tenant_id', $tenantId)->where('id', $value)->exists();
         });
 
 
