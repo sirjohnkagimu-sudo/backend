@@ -8,6 +8,11 @@ class EnsureUserBelongsToTenant
 {
     public function handle(Request $request, Closure $next)
     {
+        // Handle OPTIONS requests (CORS preflight) without authentication
+        if ($request->isMethod('OPTIONS')) {
+            return $next($request);
+        }
+
         $tenant = tenancy()->tenant;
         $user = $request->user();
 

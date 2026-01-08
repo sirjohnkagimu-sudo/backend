@@ -9,12 +9,14 @@ class ItemController extends Controller
 {
     public function __construct()
     {
-        $this->authorizeResource(Item::class, 'item');
+        $this->middleware(['auth:sanctum', 'tenant', 'ensure-tenant']);
     }
 
     public function index()
     {
-        return Item::with(['category', 'supplier', 'location'])->get();
+        return Item::with(['category', 'supplier', 'location'])
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->get();
     }
 
     public function store(Request $request)
@@ -23,9 +25,9 @@ class ItemController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'category_id' => 'nullable|exists_tenant:App\Models\Category',
-            'supplier_id' => 'nullable|exists_tenant:App\Models\Supplier',
-            'location_id' => 'nullable|exists_tenant:App\Models\Location',
+            'category_id' => 'nullable|integer',
+            'supplier_id' => 'nullable|integer',
+            'location_id' => 'nullable|integer',
             'quantity' => 'required|integer|min:0',
             'min_quantity' => 'required|integer|min:0',
             'expiry_date' => 'nullable|date',
@@ -40,6 +42,11 @@ class ItemController extends Controller
 
     public function show(Item $item)
     {
+        // Ensure the item belongs to the authenticated user's tenant
+        if ($item->tenant_id !== auth()->user()->tenant_id) {
+            abort(403, 'Unauthorized access to this item');
+        }
+
         return $item->load(['category', 'supplier', 'location']);
     }
 
@@ -47,9 +54,9 @@ class ItemController extends Controller
     {
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'category_id' => 'nullable|exists_tenant:App\Models\Category',
-            'supplier_id' => 'nullable|exists_tenant:App\Models\Supplier',
-            'location_id' => 'nullable|exists_tenant:App\Models\Location',
+            'category_id' => 'nullable|integer',
+            'supplier_id' => 'nullable|integer',
+            'location_id' => 'nullable|integer',
             'quantity' => 'sometimes|required|integer|min:0',
             'min_quantity' => 'sometimes|required|integer|min:0',
             'expiry_date' => 'nullable|date',
@@ -64,6 +71,11 @@ class ItemController extends Controller
 
     public function destroy(Item $item)
     {
+        // Ensure the item belongs to the authenticated user's tenant
+        if ($item->tenant_id !== auth()->user()->tenant_id) {
+            abort(403, 'Unauthorized access to this item');
+        }
+
         $item->delete();
 
         return response()->json(['message' => 'Item deleted']);
@@ -72,6 +84,7 @@ class ItemController extends Controller
     public function lowStock()
     {
         return Item::whereColumn('quantity', '<=', 'min_quantity')
+            ->where('tenant_id', auth()->user()->tenant_id)
             ->with(['category', 'supplier', 'location'])
             ->get();
     }

@@ -14,7 +14,7 @@ class Cors
         if (method_exists($response, 'header')) {
             $response->header('Access-Control-Allow-Origin', $request->header('Origin'))
                     ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
-                    ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-XSRF-TOKEN')
+                    ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-XSRF-TOKEN, X-Tenant-ID')
                     ->header('Access-Control-Allow-Credentials', 'true')
                     ->header('Access-Control-Max-Age', '86400');
         }

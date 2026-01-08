@@ -10,6 +10,11 @@ class InitializeTenancyByUser
 {
     public function handle(Request $request, Closure $next)
     {
+        // Handle OPTIONS requests (CORS preflight) without authentication
+        if ($request->isMethod('OPTIONS')) {
+            return $next($request);
+        }
+
         $user = $request->user();
 
         if (!$user || !$user->tenant_id) {

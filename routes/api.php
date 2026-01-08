@@ -37,7 +37,7 @@ Route::get('/users', [AuthController::class, 'getAllUsers']);
 
 
 // Authenticated routes
-Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
+Route::middleware(['auth:sanctum', 'tenant', 'ensure-tenant'])->group(function () {
     Route::get('/cart/all', [CartController::class, 'allCarts']);
     Route::get('/cart', [CartController::class, 'view']);               // ✅ Fetch cart
     Route::post('/cart/add', [CartController::class, 'add']);           // ✅ Add to cart
