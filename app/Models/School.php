@@ -57,4 +57,14 @@ class School extends Tenant implements TenantWithDatabase
         return $this->status === 'active';
     }
 
+    /**
+     * Get the database configuration for this tenant.
+     */
+    public function database(): array
+    {
+        return [
+            'database' => 'school_' . $this->id,
+        ];
+    }
+
 }
