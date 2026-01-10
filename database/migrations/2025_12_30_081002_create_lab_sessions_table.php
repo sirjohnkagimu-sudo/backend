@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('lab_sessions', function (Blueprint $table) {
              $table->id();
-            $table->uuid('school_id');
-            $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
+            $table->uuid('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('schools')->onDelete('cascade');
             $table->foreignId('created_by')->constrained('users');
 
             $table->string('title');

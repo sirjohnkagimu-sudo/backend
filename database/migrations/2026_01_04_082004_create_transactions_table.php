@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('item_id')->constrained()->onDelete('cascade');
-            $table->uuid('school_id');
-            $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
+            $table->uuid('tenant_id')->nullable();
+            $table->foreign('tenant_id')->references('id')->on('schools')->onDelete('cascade');
             $table->enum('type', ['purchase', 'use', 'disposal']);
             $table->integer('quantity');
             $table->text('reason');
