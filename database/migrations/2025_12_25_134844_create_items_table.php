@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('items', function (Blueprint $table) {
             $table->id();
             $table->uuid('tenant_id');
-            $table->foreign('tenant_id')->references('id')->on('schools')->onDelete('cascade');
             $table->string('name');
             $table->foreignId('category_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('supplier_id')->nullable()->constrained()->onDelete('set null');
