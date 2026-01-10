@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -12,7 +13,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['tenant_id']);
+            // Check if foreign key exists before dropping
+            $foreignKeyExists = DB::select("
+                SELECT CONSTRAINT_NAME
+                FROM information_schema.TABLE_CONSTRAINTS
+                WHERE CONSTRAINT_SCHEMA = DATABASE()
+                AND TABLE_NAME = 'users'
+                AND CONSTRAINT_NAME = 'users_tenant_id_foreign'
+                AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+            ");
+
+            if (!empty($foreignKeyExists)) {
+                $table->dropForeign(['tenant_id']);
+            }
+
             $table->uuid('tenant_id')->nullable()->change();
             $table->foreign('tenant_id')->references('id')->on('schools')->onDelete('cascade');
         });
@@ -24,7 +38,20 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['tenant_id']);
+            // Check if foreign key exists before dropping
+            $foreignKeyExists = DB::select("
+                SELECT CONSTRAINT_NAME
+                FROM information_schema.TABLE_CONSTRAINTS
+                WHERE CONSTRAINT_SCHEMA = DATABASE()
+                AND TABLE_NAME = 'users'
+                AND CONSTRAINT_NAME = 'users_tenant_id_foreign'
+                AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+            ");
+
+            if (!empty($foreignKeyExists)) {
+                $table->dropForeign(['tenant_id']);
+            }
+
             $table->char('tenant_id', 36)->nullable()->change();
             $table->foreign('tenant_id')->references('id')->on('schools')->onDelete('cascade');
         });
