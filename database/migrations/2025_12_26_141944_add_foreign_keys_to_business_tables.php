@@ -12,10 +12,6 @@ return new class extends Migration
     public function up(): void
     {
         // Add foreign keys to business tables after schools table is created
-        Schema::table('users', function (Blueprint $table) {
-            $table->foreign('tenant_id')->references('id')->on('schools')->onDelete('cascade');
-        });
-
         Schema::table('categories', function (Blueprint $table) {
             $table->foreign('tenant_id')->references('id')->on('schools')->onDelete('cascade');
         });
@@ -60,10 +56,6 @@ return new class extends Migration
         });
 
         Schema::table('categories', function (Blueprint $table) {
-            $table->dropForeign(['tenant_id']);
-        });
-
-        Schema::table('users', function (Blueprint $table) {
             $table->dropForeign(['tenant_id']);
         });
     }
