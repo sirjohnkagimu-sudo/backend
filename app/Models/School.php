@@ -12,6 +12,9 @@ class School extends Tenant implements TenantWithDatabase
 {
     use HasFactory;
 
+    protected $keyType = 'string';
+    public $incrementing = false;
+
     protected $fillable = [
         'id',
         'name',
