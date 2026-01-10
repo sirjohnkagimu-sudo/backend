@@ -5,6 +5,7 @@ namespace App\Models;
 use Stancl\Tenancy\Database\Models\Tenant;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDatabase;
+use Stancl\Tenancy\DatabaseConfig;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class School extends Tenant implements TenantWithDatabase
@@ -60,11 +61,11 @@ class School extends Tenant implements TenantWithDatabase
     /**
      * Get the database configuration for this tenant.
      */
-    public function database(): array
+    public function database(): DatabaseConfig
     {
-        return [
+        return new DatabaseConfig([
             'database' => 'school_' . $this->id,
-        ];
+        ]);
     }
 
 }
