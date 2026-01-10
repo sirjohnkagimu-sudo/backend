@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('teacher_passcodes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('school_id')->constrained()->onDelete('cascade');
+            $table->uuid('school_id');
+            $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
             $table->string('passcode')->unique();
             $table->string('teacher_name');
             $table->json('permissions')->nullable(); // e.g., ['read_inventory', 'manage_lab']

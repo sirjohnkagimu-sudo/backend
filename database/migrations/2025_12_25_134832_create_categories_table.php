@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
+            $table->uuid('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('schools')->onDelete('cascade');
             $table->string('name');
             $table->timestamps();
         });

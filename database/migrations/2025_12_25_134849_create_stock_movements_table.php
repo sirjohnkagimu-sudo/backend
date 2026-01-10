@@ -14,7 +14,8 @@ return new class extends Migration
         if (!Schema::hasTable('stock_movements')) {
             Schema::create('stock_movements', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('school_id');
+                $table->uuid('school_id');
+                $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
                 $table->foreignId('item_id');
                 $table->foreignId('created_by');
 

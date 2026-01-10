@@ -14,7 +14,8 @@ return new class extends Migration
         if (!Schema::hasTable('lab_access_codes')) {
                 Schema::create('lab_access_codes', function (Blueprint $table) {
                     $table->id();
-                    $table->foreignId('school_id')->constrained('schools')->onDelete('cascade');
+                    $table->uuid('school_id');
+                    $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
                     $table->string('access_code')->unique();
                     $table->string('user_name');
                     $table->string('email')->nullable();
