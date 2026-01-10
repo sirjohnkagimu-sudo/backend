@@ -8,7 +8,7 @@
     <title>{{ config('app.name', 'Edumall') }}</title>
 
     <!-- Favicon -->
-    <link rel="icon" href="{{ asset('favicon.ico') }}">
+    <link rel="icon" href="{{ asset('storage/logo/favicon.ico') }}" type="image/x-icon"/>
 
     <!-- Google Fonts (Modern SaaS) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
