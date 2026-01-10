@@ -15,11 +15,11 @@ return new class extends Migration
         // Drop any existing foreign keys on tenant_id column
         $existingConstraints = DB::select("
             SELECT CONSTRAINT_NAME
-            FROM information_schema.TABLE_CONSTRAINTS
+            FROM information_schema.KEY_COLUMN_USAGE
             WHERE CONSTRAINT_SCHEMA = DATABASE()
             AND TABLE_NAME = 'users'
-            AND CONSTRAINT_TYPE = 'FOREIGN KEY'
-            AND CONSTRAINT_NAME LIKE '%tenant_id%'
+            AND COLUMN_NAME = 'tenant_id'
+            AND REFERENCED_TABLE_NAME IS NOT NULL
         ");
 
         foreach ($existingConstraints as $constraint) {
@@ -40,11 +40,11 @@ return new class extends Migration
         // Drop any existing foreign keys on tenant_id column
         $existingConstraints = DB::select("
             SELECT CONSTRAINT_NAME
-            FROM information_schema.TABLE_CONSTRAINTS
+            FROM information_schema.KEY_COLUMN_USAGE
             WHERE CONSTRAINT_SCHEMA = DATABASE()
             AND TABLE_NAME = 'users'
-            AND CONSTRAINT_TYPE = 'FOREIGN KEY'
-            AND CONSTRAINT_NAME LIKE '%tenant_id%'
+            AND COLUMN_NAME = 'tenant_id'
+            AND REFERENCED_TABLE_NAME IS NOT NULL
         ");
 
         foreach ($existingConstraints as $constraint) {
