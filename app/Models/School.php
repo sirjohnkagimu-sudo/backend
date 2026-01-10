@@ -12,6 +12,7 @@ class School extends Tenant implements TenantWithDatabase
 {
     use HasFactory;
 
+    protected $table = 'schools';
     protected $keyType = 'string';
     public $incrementing = false;
 
