@@ -40,8 +40,8 @@
             width: 100%;
         }
         .login-logo img {
-            max-width: 200px;
-            margin-bottom: 10px;
+            max-width: 150px;
+            margin-bottom: 20px;
         }
         .btn-primary {
             background-color: #0c4572;
@@ -71,7 +71,7 @@
 <div class="page">
     <div class="login-card">
         <div class="text-center login-logo">
-            <img src="https://i.imghippo.com/files/ynwR3604kw.png" alt="Logo">
+            <img src="https://i.imghippo.com/files/ajv8989ujg.png" alt="Logo">
             <h3>Welcome</h3>
         </div>
 
