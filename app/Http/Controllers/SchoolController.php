@@ -17,7 +17,7 @@ class SchoolController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'centre_number' => 'required|string|unique:schools',
+            'centre_number' => 'required|string|unique:schools,centre_number',
             'district' => 'nullable|string',
             'subcounty' => 'nullable|string',
             'parish' => 'nullable|string',

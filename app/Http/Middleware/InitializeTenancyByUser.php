@@ -24,7 +24,13 @@ class InitializeTenancyByUser
         }
 
         // Initialize tenant
-        Tenancy::initialize($user->tenant_id);
+        $tenant = \App\Models\School::find($user->tenant_id);
+        if (!$tenant) {
+            return response()->json([
+                'message' => 'Tenant not found'
+            ], 404);
+        }
+        Tenancy::initialize($tenant);
 
         // SECURITY: Ensure user belongs to tenant
         if (Tenancy::$tenant->id !== $user->tenant_id) {

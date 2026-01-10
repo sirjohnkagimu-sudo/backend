@@ -37,7 +37,8 @@ Route::get('/users', [AuthController::class, 'getAllUsers']);
 
 
 // Authenticated routes
-Route::middleware(['auth:sanctum', 'tenant', 'ensure-tenant'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
     Route::get('/cart/all', [CartController::class, 'allCarts']);
     Route::get('/cart', [CartController::class, 'view']);               // ✅ Fetch cart
     Route::post('/cart/add', [CartController::class, 'add']);           // ✅ Add to cart
@@ -78,6 +79,12 @@ Route::middleware(['auth:sanctum', 'tenant', 'ensure-tenant'])->group(function (
 
     // Lab access code management
     Route::apiResource('lab-access-codes', LabAccessCodeController::class);
+
+    // User management within tenant
+    Route::get('/tenant-users', [AuthController::class, 'getTenantUsers']);
+    Route::post('/tenant-users', [AuthController::class, 'createTenantUser']);
+    Route::put('/tenant-users/{user}', [AuthController::class, 'updateTenantUser']);
+    Route::delete('/tenant-users/{user}', [AuthController::class, 'deleteTenantUser']);
 
 
 

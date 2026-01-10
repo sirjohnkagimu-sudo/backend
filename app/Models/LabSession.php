@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 class LabSession extends Model
 {
     protected $fillable = [
-        'school_id',
+        'tenant_id',
         'created_by',
         'title',
         'type',

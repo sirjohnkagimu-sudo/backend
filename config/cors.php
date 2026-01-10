@@ -38,6 +38,7 @@ return [
         'Authorization',
         'X-Requested-With',
         'Accept',
+        'X-Tenant-ID',
     ],
 
     'exposed_headers' => [],

@@ -9,7 +9,7 @@ class ItemController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth:sanctum', 'tenant', 'ensure-tenant']);
+        $this->middleware(['auth:sanctum']);
     }
 
     public function index()

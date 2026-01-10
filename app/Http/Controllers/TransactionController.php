@@ -17,7 +17,7 @@ class TransactionController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $query = Transaction::where('school_id', $user->school_id)->with('item');
+        $query = Transaction::where('tenant_id', $user->tenant_id)->with('item');
 
         if ($request->filled('item_id')) {
             $query->where('item_id', $request->item_id);
@@ -32,7 +32,7 @@ class TransactionController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
-        if (!$user || $user->role_id !== 1 || !$user->school_id) {
+        if (!$user || $user->role_id !== 1 || !$user->tenant_id) {
             return response()->json(['error' => 'Unauthorized. Only school administrators can manage transactions.'], 403);
         }
 
@@ -47,7 +47,7 @@ class TransactionController extends Controller
             'cost' => 'nullable|numeric|min:0',
         ]);
 
-        $validated['school_id'] = $user->school_id;
+        $validated['tenant_id'] = $user->tenant_id;
 
         $transaction = Transaction::create($validated);
 
@@ -60,7 +60,7 @@ class TransactionController extends Controller
     public function show(Transaction $transaction)
     {
         $user = request()->user();
-        if (!$user || $transaction->school_id !== $user->school_id) {
+        if (!$user || $transaction->tenant_id !== $user->tenant_id) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
@@ -73,7 +73,7 @@ class TransactionController extends Controller
     public function update(Request $request, Transaction $transaction)
     {
         $user = $request->user();
-        if (!$user || $user->role_id !== 1 || $transaction->school_id !== $user->school_id) {
+        if (!$user || $user->role_id !== 1 || $transaction->tenant_id !== $user->tenant_id) {
             return response()->json(['error' => 'Unauthorized. Only school administrators can manage transactions.'], 403);
         }
 
@@ -98,7 +98,7 @@ class TransactionController extends Controller
     public function destroy(Transaction $transaction)
     {
         $user = request()->user();
-        if (!$user || $user->role_id !== 1 || $transaction->school_id !== $user->school_id) {
+        if (!$user || $user->role_id !== 1 || $transaction->tenant_id !== $user->tenant_id) {
             return response()->json(['error' => 'Unauthorized. Only school administrators can manage transactions.'], 403);
         }
 

@@ -18,7 +18,7 @@ class LabAccessCodeController extends Controller
             return response()->json(['error' => 'Unauthorized. Only school administrators can manage lab access codes.'], 403);
         }
 
-        return response()->json(LabAccessCode::all());
+        return response()->json(LabAccessCode::where('school_id', $user->tenant_id)->get());
     }
 
     /**
@@ -36,13 +36,13 @@ class LabAccessCodeController extends Controller
             'email' => 'nullable|email',
             'role' => 'nullable|string',
             'permissions' => 'nullable|array',
-            'school_id' => 'required|integer|exists:schools,id',
+            'access_code' => 'nullable|string|size:8|unique:lab_access_codes,access_code',
         ]);
 
-        $accessCode = Str::random(8); // Generate 8-character access code
+        $accessCode = $request->access_code ?: Str::random(8); // Use provided or generate 8-character access code
 
         $labAccessCode = LabAccessCode::create([
-            'school_id' => $request->school_id,
+            'school_id' => $user->tenant_id,
             'access_code' => $accessCode,
             'user_name' => $request->user_name,
             'email' => $request->email,
@@ -59,11 +59,13 @@ class LabAccessCodeController extends Controller
      */
     public function show(string $id)
     {
-        $accessCode = LabAccessCode::findOrFail($id);
         $user = request()->user();
         if ($user->role_id !== 1) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
+        $accessCode = LabAccessCode::where('id', $id)
+            ->where('school_id', $user->tenant_id)
+            ->firstOrFail();
         return response()->json($accessCode);
     }
 
@@ -72,11 +74,14 @@ class LabAccessCodeController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $accessCode = LabAccessCode::findOrFail($id);
         $user = $request->user();
         if ($user->role_id !== 1) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
+
+        $accessCode = LabAccessCode::where('id', $id)
+            ->where('school_id', $user->tenant_id)
+            ->firstOrFail();
 
         $request->validate([
             'user_name' => 'sometimes|string',
@@ -95,11 +100,14 @@ class LabAccessCodeController extends Controller
      */
     public function destroy(string $id)
     {
-        $accessCode = LabAccessCode::findOrFail($id);
         $user = request()->user();
         if ($user->role_id !== 1) {
             return response()->json(['error' => 'Unauthorized. Only school administrators can manage lab access codes.'], 403);
         }
+
+        $accessCode = LabAccessCode::where('id', $id)
+            ->where('school_id', $user->tenant_id)
+            ->firstOrFail();
 
         $accessCode->delete();
         return response()->json(['message' => 'Access code deleted']);

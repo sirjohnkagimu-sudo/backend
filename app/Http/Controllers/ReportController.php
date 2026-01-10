@@ -14,37 +14,37 @@ class ReportController extends Controller
     public function analytics(Request $request)
     {
         $user = $request->user();
-        if ($user->role_id !== 1) {
+        if (!$user->is_school_admin) {
             return response()->json(['error' => 'Unauthorized. Only school administrators can view analytics.'], 403);
         }
 
-        // Get school_id from user
-        $schoolId = $user->school_id;
+        // Get tenant_id from user
+        $tenantId = $user->tenant_id;
 
-        // Total inventory items for the school
-        $totalItems = Item::where('school_id', $schoolId)->count();
+        // Total inventory items for the tenant
+        $totalItems = Item::where('tenant_id', $tenantId)->count();
 
         // Active users (lab access codes that are active)
-        $activeUsers = LabAccessCode::where('school_id', $schoolId)
+        $activeUsers = LabAccessCode::where('school_id', $tenantId)
             ->where('is_active', true)
             ->count();
 
-        // Total suppliers
-        $totalSuppliers = Supplier::count(); // Suppliers might be global or per school
+        // Total suppliers for the tenant
+        $totalSuppliers = Supplier::where('tenant_id', $tenantId)->count();
 
         // Recent transactions (stock movements)
         $recentTransactions = DB::table('stock_movements')
-            ->where('school_id', $schoolId)
+            ->where('tenant_id', $tenantId)
             ->where('created_at', '>=', now()->subDays(30))
             ->count();
 
         // Low stock items
-        $lowStockItems = Item::where('school_id', $schoolId)
+        $lowStockItems = Item::where('tenant_id', $tenantId)
             ->whereColumn('quantity', '<=', 'min_quantity')
             ->count();
 
         // Total value of inventory
-        $totalValue = Item::where('school_id', $schoolId)
+        $totalValue = Item::where('tenant_id', $tenantId)
             ->sum(DB::raw('quantity * unit_cost'));
 
         return response()->json([

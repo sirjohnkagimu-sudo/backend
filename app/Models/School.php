@@ -14,12 +14,16 @@ class School extends Tenant implements TenantWithDatabase
 
 
     protected $fillable = [
-        'id',       // optional if using UUID
-        'name',     // top-level column required by MySQL
-        'data',     // JSON column
+        'id',
+        'name',
+        'centre_number',
+        'district',
+        'admin_name',
+        'admin_email',
+        'admin_phone',
+        'status',
+        'data',
     ];
-
-    protected $virtualColumns = ["name"]; // Make 'name' a real column
 
     /** Relationships */
     public function users()
@@ -38,42 +42,12 @@ class School extends Tenant implements TenantWithDatabase
     }
 
     /** ----------------------
-     * JSON accessors
+     * JSON accessors for additional data
      * ----------------------
      */
     public function getDataValue(string $key)
     {
         return $this->data[$key] ?? null;
-    }
-
-    public function getStatusAttribute(): ?string
-    {
-        return $this->getDataValue('status') ?? 'active';
-    }
-
-    public function getCentreNumberAttribute(): ?string
-    {
-        return $this->getDataValue('centre_number');
-    }
-
-    public function getDistrictAttribute(): ?string
-    {
-        return $this->getDataValue('district');
-    }
-
-    public function getAdminNameAttribute(): ?string
-    {
-        return $this->getDataValue('admin_name');
-    }
-
-    public function getAdminEmailAttribute(): ?string
-    {
-        return $this->getDataValue('admin_email');
-    }
-
-    public function getAdminPhoneAttribute(): ?string
-    {
-        return $this->getDataValue('admin_phone');
     }
 
     /** ----------------------
@@ -85,16 +59,4 @@ class School extends Tenant implements TenantWithDatabase
         return $this->status === 'active';
     }
 
-    /** ----------------------
-     * Boot method: sync JSON 'name' to top-level 'name'
-     * ----------------------
-     */
-    protected static function booted()
-    {
-        static::creating(function ($school) {
-            if (isset($school->data['name']) && empty($school->name)) {
-                $school->name = $school->data['name'];
-            }
-        });
-    }
 }

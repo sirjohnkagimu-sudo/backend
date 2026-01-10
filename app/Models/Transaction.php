@@ -8,7 +8,7 @@ class Transaction extends Model
 {
     protected $fillable = [
         'item_id',
-        'school_id',
+        'tenant_id',
         'type',
         'quantity',
         'reason',
@@ -31,6 +31,6 @@ class Transaction extends Model
 
     public function school()
     {
-        return $this->belongsTo(School::class);
+        return $this->belongsTo(School::class, 'tenant_id');
     }
 }
