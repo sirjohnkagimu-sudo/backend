@@ -187,8 +187,6 @@ return [
 
         /*
          * Package Service Providers...
-         */
-        Stancl\Tenancy\TenancyServiceProvider::class,
         //Stevebauman\Location\LocationServiceProvider::class,
 
         /*
