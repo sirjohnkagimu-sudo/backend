@@ -9,9 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class School extends Tenant implements TenantWithDatabase
 {
-    use HasFactory, HasDatabase;
-
-
+    use HasFactory;
 
     protected $fillable = [
         'id',
