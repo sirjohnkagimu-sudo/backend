@@ -51,4 +51,28 @@ class SchoolController extends Controller
 
         return redirect()->back()->with('success', 'School status updated successfully.');
     }
+
+    public function updateSchool(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user->school) {
+            return response()->json(['message' => 'No school associated with this account'], 404);
+        }
+
+        $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'district' => 'sometimes|nullable|string|max:255',
+            'admin_name' => 'sometimes|nullable|string|max:255',
+            'admin_email' => 'sometimes|nullable|email',
+            'admin_phone' => 'sometimes|nullable|string|max:50',
+        ]);
+
+        $user->school->update($request->only(['name', 'district', 'admin_name', 'admin_email', 'admin_phone']));
+
+        return response()->json([
+            'message' => 'School information updated successfully',
+            'school' => $user->school
+        ]);
+    }
 }

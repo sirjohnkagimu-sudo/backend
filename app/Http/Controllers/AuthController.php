@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\School;
+use App\Models\LabAccessCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -34,40 +35,48 @@ class AuthController extends Controller
         $school = null;
 
         \DB::transaction(function () use ($request, &$school, &$user) {
-            // Create or get the school (tenant)
-            $school = School::firstOrCreate(
-                ['centre_number' => $request->centre_number],
-                [
-                    'id'       => Str::uuid(),
-                    'name'     => $request->institution_name,
-                    'district' => $request->district,
-                    'admin_name'  => $request->adminName,
-                    'admin_email' => $request->adminEmail,
-                    'admin_phone' => $request->adminPhone,
-                    'status'   => 'active',
-                    'data' => [
-                        'paymentMethods'    => $request->paymentMethods ?? [],
-                        'mobileMoneyNumber' => $request->mobileMoneyNumber ?? null,
-                        'bankAccount'       => $request->bankAccount ?? null,
-                        'designation'       => $request->designation ?? null,
-                        'customDesignation' => $request->customDesignation ?? null,
-                    ],
-                ]
-            );
+            // Check if school with centre_number already exists
+            $existingSchool = School::where('centre_number', $request->centre_number)->first();
+            if ($existingSchool) {
+                throw ValidationException::withMessages(['centre_number' => ['Centre number already exists']]);
+            }
+
+            // Create the school (tenant)
+            $school = School::create([
+                'id'       => Str::uuid(),
+                'name'     => $request->institution_name,
+                'centre_number' => $request->centre_number,
+                'district' => $request->district,
+                'admin_name'  => $request->adminName,
+                'admin_email' => $request->adminEmail,
+                'admin_phone' => $request->adminPhone,
+                'status'   => 'active',
+                'data' => [
+                    'paymentMethods'    => $request->paymentMethods ?? [],
+                    'mobileMoneyNumber' => $request->mobileMoneyNumber ?? null,
+                    'bankAccount'       => $request->bankAccount ?? null,
+                    'designation'       => $request->designation ?? null,
+                    'customDesignation' => $request->customDesignation ?? null,
+                ],
+            ]);
+
+            // Check if user with email already exists
+            $existingUser = User::where('email', $request->adminEmail)->first();
+            if ($existingUser) {
+                throw ValidationException::withMessages(['adminEmail' => ['Email already exists']]);
+            }
 
             // Create the admin user
-            $user = User::firstOrCreate(
-                ['email' => $request->adminEmail],
-                [
-                    'firstName'       => $request->adminName,
-                    'lastName'        => '',
-                    'phone'           => $request->adminPhone,
-                    'password'        => Hash::make($request->password),
-                    'tenant_id'       => $school->id,
-                    'role_id'         => 1,
-                    'is_school_admin' => true,
-                ]
-            );
+            $user = User::create([
+                'firstName'       => $request->adminName,
+                'lastName'        => $request->lastName,
+                'email'           => $request->adminEmail,
+                'phone'           => $request->adminPhone,
+                'password'        => Hash::make($request->password),
+                'tenant_id'       => $school->id,
+                'role_id'         => 1,
+                'is_school_admin' => true,
+            ]);
         });
 
         return response()->json([
@@ -80,17 +89,24 @@ class AuthController extends Controller
 
     /**
      * =============
-     * LOGIN USER
+     * ADMIN LOGIN
      * =============
      */
-    public function login(Request $request)
+    public function adminLogin(Request $request)
     {
-        $request->validate(['email' => 'required|email', 'password' => 'required|string']);
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
 
         $user = User::where('email', $request->email)->firstOrFail();
 
         if (!Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages(['email' => ['Invalid credentials']]);
+        }
+
+        if (!$user->is_school_admin) {
+            throw ValidationException::withMessages(['email' => ['Unauthorized. Admin access required.']]);
         }
 
         if ($user->school && $user->school->status !== 'active') {
@@ -100,11 +116,75 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Login successful',
+            'message' => 'Admin login successful',
             'user'    => $this->authUserResponse($user),
             'token'   => $token,
         ]);
     }
+
+    /**
+     * =============
+     * TENANT USER LOGIN WITH ACCESS CODE
+     * =============
+     */
+    public function tenantLogin(Request $request)
+    {
+        $request->validate([
+            'admin_email' => 'required|email',
+            'access_code' => 'required|string',
+        ]);
+
+        // Find the admin user
+        $admin = User::where('email', $request->admin_email)->where('is_school_admin', true)->first();
+
+        if (!$admin) {
+            throw ValidationException::withMessages(['admin_email' => ['Admin not found or not authorized']]);
+        }
+
+        // Check if school is active
+        if ($admin->school && $admin->school->status !== 'active') {
+            return response()->json(['message' => 'Institution account is not active'], 403);
+        }
+
+        // Find active access code for this school
+        $accessCode = LabAccessCode::where('school_id', $admin->tenant_id)
+            ->where('access_code', $request->access_code)
+            ->active()
+            ->first();
+
+        if (!$accessCode) {
+            throw ValidationException::withMessages(['access_code' => ['Invalid or expired access code']]);
+        }
+
+        // Login as the admin but present as access user with role 2
+        $token = $admin->createToken('auth_token')->plainTextToken;
+
+        // Custom user response for access code user
+        $userResponse = [
+            'id'              => $admin->id, // Keep admin ID for tenancy
+            'firstName'       => $accessCode->user_name,
+            'lastName'        => '',
+            'email'           => $accessCode->email ?: $admin->email,
+            'role_id'         => 2,
+            'role'            => ['id' => 2, 'name' => 'Access User'],
+            'is_school_admin' => false,
+            'tenant_id'       => $admin->tenant_id,
+            'accountType'     => 'institution',
+            'permissions'     => $accessCode->permissions,
+            'school' => $admin->school ? [
+                'id'     => $admin->school->id,
+                'name'   => $admin->school->name,
+                'status' => $admin->school->status,
+            ] : null,
+        ];
+
+        return response()->json([
+            'message' => 'Tenant login successful',
+            'user'    => $userResponse,
+            'token'   => $token,
+        ]);
+    }
+
 
     /**
      * ============================
@@ -290,10 +370,6 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->is_school_admin) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
         $users = User::where('tenant_id', $user->tenant_id)->with('role')->get();
 
         return response()->json(['users' => $users]);
@@ -304,8 +380,14 @@ class AuthController extends Controller
      * GET ALL USERS (ADMIN)
      * ============================
      */
-    public function getAllUsers()
+    public function getAllUsers(Request $request)
     {
+        $user = $request->user();
+
+        if (!$user->is_school_admin) {
+            return response()->json(['message' => 'Unauthorized. Only school administrators can view all users.'], 403);
+        }
+
         $users = User::with('school')->get();
 
         return response()->json(['users' => $users]);
@@ -335,4 +417,56 @@ class AuthController extends Controller
             ] : null,
         ];
     }
+
+    /**
+     * ============================
+     * ACCESS CODE USER RESPONSE
+     * ============================
+     */
+    private function accessCodeUserResponse(User $admin, $accessCode): array
+    {
+        return [
+            'id'              => $admin->id, // Keep admin ID for tenancy
+            'firstName'       => $accessCode->user_name,
+            'lastName'        => '',
+            'email'           => $accessCode->email ?: $admin->email,
+            'role_id'         => 2,
+            'role'            => ['id' => 2, 'name' => 'Access User'],
+            'is_school_admin' => false,
+            'tenant_id'       => $admin->tenant_id,
+            'accountType'     => 'institution',
+            'permissions'     => $accessCode->permissions,
+            'school' => $admin->school ? [
+                'id'     => $admin->school->id,
+                'name'   => $admin->school->name,
+                'status' => $admin->school->status,
+            ] : null,
+        ];
+    }
+
+    /**
+     * ============================
+     * CHANGE PASSWORD
+     * ============================
+     */
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            throw ValidationException::withMessages(['current_password' => ['Current password is incorrect']]);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->password)
+        ]);
+
+        return response()->json(['message' => 'Password changed successfully']);
+    }
 }
+

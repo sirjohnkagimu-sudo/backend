@@ -30,7 +30,8 @@ use App\Http\Controllers\LabCalendarController;
 
 // Public login routes (no middleware)
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/admin/login', [AuthController::class, 'adminLogin']);
+Route::post('/tenant/login', [AuthController::class, 'tenantLogin']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::get('/users', [AuthController::class, 'getAllUsers']);
@@ -39,6 +40,7 @@ Route::get('/users', [AuthController::class, 'getAllUsers']);
 // Authenticated routes
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/profile', [AuthController::class, 'updateProfile']);
+    Route::put('/change-password', [AuthController::class, 'changePassword']);
     Route::get('/cart/all', [CartController::class, 'allCarts']);
     Route::get('/cart', [CartController::class, 'view']);               // ✅ Fetch cart
     Route::post('/cart/add', [CartController::class, 'add']);           // ✅ Add to cart
@@ -73,6 +75,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Admin routes for school management
     Route::apiResource('schools', SchoolController::class)->only(['index', 'store', 'update']);
+    Route::put('/school/update', [SchoolController::class, 'updateSchool']);
 
     // Teacher passcode management
     Route::apiResource('teacher-passcodes', TeacherPasscodeController::class);
@@ -110,3 +113,4 @@ Route::prefix('labs')->group(function () {
 });
 
 Route::get('/computer-labs', [ComputerLabController::class, 'getComputerLab'])->name('api.computer_lab');
+
