@@ -26,13 +26,16 @@ class ItemController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'nullable|integer',
+            'category' => 'nullable|string|max:255',
             'supplier_id' => 'nullable|integer',
             'location_id' => 'nullable|integer',
             'quantity' => 'required|integer|min:0',
             'min_quantity' => 'required|integer|min:0',
+            'max_quantity' => 'nullable|integer|min:0',
             'expiry_date' => 'nullable|date',
             'unit' => 'nullable|string|max:50',
             'unit_cost' => 'nullable|numeric|min:0',
+            'total_value' => 'nullable|numeric|min:0',
         ]);
 
         $validated['tenant_id'] = $user->tenant_id;
@@ -55,13 +58,16 @@ class ItemController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'category_id' => 'nullable|integer',
+            'category' => 'nullable|string|max:255',
             'supplier_id' => 'nullable|integer',
             'location_id' => 'nullable|integer',
             'quantity' => 'sometimes|required|integer|min:0',
             'min_quantity' => 'sometimes|required|integer|min:0',
+            'max_quantity' => 'nullable|integer|min:0',
             'expiry_date' => 'nullable|date',
             'unit' => 'nullable|string|max:50',
             'unit_cost' => 'nullable|numeric|min:0',
+            'total_value' => 'nullable|numeric|min:0',
         ]);
 
         $item->update($validated);

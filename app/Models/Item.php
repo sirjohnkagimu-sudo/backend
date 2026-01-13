@@ -16,9 +16,11 @@ class Item extends Model
         'location_id',
         'quantity',
         'min_quantity',
+        'max_quantity',
         'expiry_date',
         'unit',
         'unit_cost',
+        'total_value',
     ];
 
     public function category() {
