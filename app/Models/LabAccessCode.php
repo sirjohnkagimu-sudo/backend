@@ -17,6 +17,7 @@ class LabAccessCode extends Model
         'email',
         'role',
         'permissions',
+        'department',
         'created_by',
         'expires_at',
         'is_active',

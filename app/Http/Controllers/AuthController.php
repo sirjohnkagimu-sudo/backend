@@ -269,6 +269,7 @@ class AuthController extends Controller
             'email'     => 'required|email|unique:users,email',
             'password'  => 'required|string|min:6',
             'role_id'   => 'required|exists:roles,id',
+            'department' => 'required|string|in:laboratory,pantry,sickbay,sports',
         ]);
 
         $newUser = User::create([
@@ -278,6 +279,7 @@ class AuthController extends Controller
             'password'        => Hash::make($request->password),
             'tenant_id'       => $currentUser->tenant_id,
             'role_id'         => $request->role_id,
+            'department'      => $request->department,
             'is_school_admin' => false,
         ]);
 
@@ -305,9 +307,10 @@ class AuthController extends Controller
             'lastName'  => 'nullable|string|max:255',
             'email'     => 'sometimes|required|email|unique:users,email,' . $user->id,
             'role_id'   => 'sometimes|required|exists:roles,id',
+            'department' => 'sometimes|required|string|in:laboratory,pantry,sickbay,sports',
         ]);
 
-        $user->update($request->only(['firstName', 'lastName', 'email', 'role_id']));
+        $user->update($request->only(['firstName', 'lastName', 'email', 'role_id', 'department']));
 
         return response()->json([
             'message' => 'User updated successfully',
@@ -407,6 +410,7 @@ class AuthController extends Controller
             'email'           => $user->email,
             'role_id'         => $user->role_id,
             'role'            => $user->role,
+            'department'      => $user->department,
             'is_school_admin' => (bool) $user->is_school_admin,
             'tenant_id'       => $user->tenant_id,
             'accountType'     => 'institution',

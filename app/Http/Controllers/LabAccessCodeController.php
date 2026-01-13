@@ -36,6 +36,7 @@ class LabAccessCodeController extends Controller
             'email' => 'nullable|email',
             'role' => 'nullable|string',
             'permissions' => 'nullable|array',
+            'department' => 'nullable|string|in:Laboratory,Pantry,Sickbay,Sports',
             'access_code' => 'nullable|string|size:8|unique:lab_access_codes,access_code',
         ]);
 
@@ -48,6 +49,7 @@ class LabAccessCodeController extends Controller
             'email' => $request->email,
             'role' => $request->role,
             'permissions' => $request->permissions ?? [],
+            'department' => $request->department,
             'created_by' => $user->id,
         ]);
 
@@ -88,10 +90,11 @@ class LabAccessCodeController extends Controller
             'email' => 'sometimes|email',
             'role' => 'sometimes|string',
             'permissions' => 'sometimes|array',
+            'department' => 'sometimes|string|in:Laboratory,Pantry,Sickbay,Sports',
             'is_active' => 'sometimes|boolean',
         ]);
 
-        $accessCode->update($request->only(['user_name', 'email', 'role', 'permissions', 'is_active']));
+        $accessCode->update($request->only(['user_name', 'email', 'role', 'permissions', 'department', 'is_active']));
         return response()->json($accessCode);
     }
 
