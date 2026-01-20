@@ -366,6 +366,41 @@ class AuthController extends Controller
 
     /**
      * ============================
+     * UPDATE SCHOOL INFORMATION
+     * ============================
+     */
+    public function updateSchool(Request $request)
+    {
+        $user = $request->user();
+
+        // Only school admins can update school information
+        if (!$user->is_school_admin) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'name'         => 'sometimes|string|max:255',
+            'district'     => 'sometimes|string|max:255',
+            'admin_name'   => 'sometimes|string|max:255',
+            'admin_email'  => 'sometimes|email|max:255',
+            'admin_phone'  => 'sometimes|string|max:50',
+        ]);
+
+        $school = $user->school;
+        if (!$school) {
+            return response()->json(['message' => 'School not found'], 404);
+        }
+
+        $school->update($request->only(['name', 'district', 'admin_name', 'admin_email', 'admin_phone']));
+
+        return response()->json([
+            'message' => 'School information updated successfully',
+            'school'  => $school,
+        ]);
+    }
+
+    /**
+     * ============================
      * GET TENANT USERS
      * ============================
      */
@@ -471,6 +506,24 @@ class AuthController extends Controller
         ]);
 
         return response()->json(['message' => 'Password changed successfully']);
+    }
+
+    /**
+     * ============================
+     * GET SCHOOL INFORMATION
+     * ============================
+     */
+    public function getSchool(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user->school) {
+            return response()->json(['message' => 'School not found'], 404);
+        }
+
+        return response()->json([
+            'school' => $user->school,
+        ]);
     }
 }
 

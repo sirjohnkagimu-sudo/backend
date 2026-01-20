@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\SchoolRegistrationConfirmation;
 use App\Models\School;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class SchoolController extends Controller
 {
@@ -30,6 +32,16 @@ class SchoolController extends Controller
 
         // Create the school
         $school = School::create($request->all());
+
+        // Send confirmation email if admin_email is provided
+        if ($school->admin_email) {
+            try {
+                Mail::to($school->admin_email)->send(new SchoolRegistrationConfirmation($school));
+            } catch (\Exception $e) {
+                // Log the error but don't fail the request
+                \Log::error('Failed to send school registration confirmation email: ' . $e->getMessage());
+            }
+        }
 
         return response()->json([
             'message' => 'School created successfully',

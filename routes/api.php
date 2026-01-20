@@ -26,6 +26,8 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\LabCalendarController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\QuotationController;
 
 
 // Public login routes (no middleware)
@@ -89,7 +91,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/tenant-users/{user}', [AuthController::class, 'updateTenantUser']);
     Route::delete('/tenant-users/{user}', [AuthController::class, 'deleteTenantUser']);
 
+    // Notification routes
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
+    Route::put('/notifications/{id}/ignore', [NotificationController::class, 'ignore']);
+    Route::delete('/notifications/read/clear', [NotificationController::class, 'clearRead']);
 
+    // Quotation routes
+    Route::post('/quotations/send', [QuotationController::class, 'sendQuotation']);
 
 });
 
