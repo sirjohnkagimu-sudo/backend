@@ -14,7 +14,7 @@ class ReportController extends Controller
     public function analytics(Request $request)
     {
         $user = $request->user();
-        if (!$user->is_school_admin) {
+        if (!$user || !$user->is_school_admin) {
             return response()->json(['error' => 'Unauthorized. Only school administrators can view analytics.'], 403);
         }
 

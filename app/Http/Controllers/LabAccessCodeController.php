@@ -14,7 +14,7 @@ class LabAccessCodeController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        if ($user->role_id !== 1) {
+        if (!$user || $user->role_id !== 1) {
             return response()->json(['error' => 'Unauthorized. Only school administrators can manage lab access codes.'], 403);
         }
 
@@ -27,7 +27,7 @@ class LabAccessCodeController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
-        if ($user->role_id !== 1) {
+        if (!$user || $user->role_id !== 1) {
             return response()->json(['error' => 'Unauthorized. Only school administrators can manage lab access codes.'], 403);
         }
 
@@ -62,7 +62,7 @@ class LabAccessCodeController extends Controller
     public function show(string $id)
     {
         $user = request()->user();
-        if ($user->role_id !== 1) {
+        if (!$user || $user->role_id !== 1) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
         $accessCode = LabAccessCode::where('id', $id)
@@ -77,7 +77,7 @@ class LabAccessCodeController extends Controller
     public function update(Request $request, string $id)
     {
         $user = $request->user();
-        if ($user->role_id !== 1) {
+        if (!$user || $user->role_id !== 1) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -104,7 +104,7 @@ class LabAccessCodeController extends Controller
     public function destroy(string $id)
     {
         $user = request()->user();
-        if ($user->role_id !== 1) {
+        if (!$user || $user->role_id !== 1) {
             return response()->json(['error' => 'Unauthorized. Only school administrators can manage lab access codes.'], 403);
         }
 

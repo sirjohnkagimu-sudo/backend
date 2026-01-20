@@ -259,7 +259,7 @@ class AuthController extends Controller
     {
         $currentUser = $request->user();
 
-        if (!$currentUser->is_school_admin) {
+        if (!$currentUser || !$currentUser->is_school_admin) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -298,7 +298,7 @@ class AuthController extends Controller
     {
         $currentUser = $request->user();
 
-        if (!$currentUser->is_school_admin || $user->tenant_id !== $currentUser->tenant_id) {
+        if (!$currentUser || !$currentUser->is_school_admin || $user->tenant_id !== $currentUser->tenant_id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -328,6 +328,7 @@ class AuthController extends Controller
         $currentUser = $request->user();
 
         if (
+            !$currentUser ||
             !$currentUser->is_school_admin ||
             $user->tenant_id !== $currentUser->tenant_id ||
             $user->id === $currentUser->id
@@ -374,7 +375,7 @@ class AuthController extends Controller
         $user = $request->user();
 
         // Only school admins can update school information
-        if (!$user->is_school_admin) {
+        if (!$user || !$user->is_school_admin) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -422,7 +423,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->is_school_admin) {
+        if (!$user || !$user->is_school_admin) {
             return response()->json(['message' => 'Unauthorized. Only school administrators can view all users.'], 403);
         }
 
