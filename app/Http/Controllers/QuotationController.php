@@ -68,106 +68,207 @@ class QuotationController extends Controller
     /**
      * Build HTML email template
      */
-    private function buildEmailTemplate($data, $school)
-    {
-        $quotation = $data['quotation_data'];
-        $items = $quotation['items'];
-        $totalCost = $quotation['totalEstimatedCost'];
-        $createdDate = $quotation['createdDate'];
-        $createdBy = $quotation['createdBy'];
-        $notes = $data['notes'] ?? '';
+   private function buildEmailTemplate($data, $school, $user = null)
+{
+   $quotation = $data['quotation_data'];
+   $items = $quotation['items'];
+   $totalCost = $quotation['totalEstimatedCost'];
+   $createdDate = $quotation['createdDate'];
+   $createdBy = $quotation['createdBy'];
+   $notes = $data['notes'] ?? '';
+   $user = $data['user'] ?? null;
 
-        $html = '
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>Quotation Request</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
-                .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
-                .header { background: #007bff; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
-                .content { padding: 20px; }
-                .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                .items-table th, .items-table td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-                .items-table th { background-color: #f8f9fa; font-weight: bold; }
-                .total { background-color: #e9ecef; padding: 15px; text-align: right; font-weight: bold; border-radius: 5px; }
-                .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
-                .school-info { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>EDUMALL</h1>
-                    <h2>Laboratory Management System</h2>
-                    <h3>Quotation Request</h3>
-                </div>
+    $headerBg = 'https://i.imghippo.com/files/QaUM5275qQ.jpg';
+    $logo = 'https://i.imghippo.com/files/ajv8989ujg.png';
 
-                <div class="content">
-                    <div class="school-info">
-                        <strong>From:</strong> ' . ($school ? $school->name : 'Edumall System') . '<br>
-                        <strong>Requested By:</strong> ' . $createdBy . '<br>
-                        <strong>Date:</strong> ' . $createdDate . '<br>
-                        <strong>Quotation ID:</strong> ' . $data['quotation_id'] . '
-                    </div>
+    $html = '
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Quotation Request</title>
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #f2f4f7;
+    font-family: Poppins, Helvetica, sans-serif;
+}
+.container {
+    max-width: 640px;
+    margin: 30px auto;
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+.header {
+    position: relative;
+    background: #B0E0E6;
+    background-size: cover;
+    background-position: center;
+    padding: 50px 20px;
+    text-align: center;
+}
+.header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+}
+.header-content {
+    position: relative;
+    z-index: 2;
+}
+.header img {
+    max-width: 140px;
+    margin-bottom: 15px;
+}
+.header h1 {
+    margin: 0;
+    font-size: 22px;
+    letter-spacing: 1px;
+    color: #ffffff;
+}
+.header p {
+    margin: 6px 0 0;
+    font-size: 14px;
+    color: #e5e7eb;
+}
+.content {
+    padding: 30px;
+    color: #1f2937;
+}
+.info-box {
+    background: #f9fafb;
+    border-left: 4px solid #1E90FF;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 25px;
+    font-size: 14px;
+}
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+.items-table th {
+    background: #f3f4f6;
+    padding: 10px;
+    text-align: left;
+    font-size: 13px;
+}
+.items-table td {
+    padding: 10px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 13px;
+}
+.total {
+    background: #1E90FF;
+    color: #ffffff;
+    padding: 14px;
+    border-radius: 6px;
+    text-align: right;
+    font-weight: bold;
+    margin-top: 20px;
+}
+.footer {
+    background: #0b1220;
+    color: #9ca3af;
+    padding: 25px;
+    text-align: center;
+    font-size: 12px;
+}
+.footer strong {
+    color: #ffffff;
+}
+.footer a {
+    color: #38bdf8;
+    text-decoration: none;
+}
+</style>
+</head>
 
-                    <p>Dear Supplier,</p>
+<body>
+<div class="container">
 
-                    <p>We are requesting quotations for the following laboratory items that are running low in stock:</p>
+    <div class="header">
+        <div class="header-content">
+            <img src="' . $logo . '" alt="Edumall Logo">
+            <h1>QUOTATION REQUEST</h1>
+            <p>Laboratory Procurement</p>
+        </div>
+    </div>
 
-                    <table class="items-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Item Name</th>
-                                <th>Quantity Needed</th>
-                                <th>Estimated Cost (UGX)</th>
-                            </tr>
-                        </thead>
-                        <tbody>';
+    <div class="content">
+        <div class="info-box">
+            <strong>From:</strong> ' . ($school ? $school->name : 'Edumall System') . '<br>
+            <strong>Requested By:</strong> ' . $createdBy . '<br>
+            <strong>Date:</strong> ' . $createdDate . '<br>
+            <strong>Quotation ID:</strong> ' . $data['quotation_id'] . '
+        </div>
 
-        foreach ($items as $index => $item) {
-            $html .= '
-                            <tr>
-                                <td>' . ($index + 1) . '</td>
-                                <td>' . htmlspecialchars($item['name']) . '</td>
-                                <td>' . $item['quantity'] . '</td>
-                                <td>UGX ' . number_format($item['estimatedCost'], 2) . '</td>
-                            </tr>';
-        }
+        <p>Dear Supplier,</p>
 
+        <p>We kindly request a quotation for the following laboratory items:</p>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Item Name</th>
+                    <th>Quantity</th>
+                    <th>Estimated Cost (UGX)</th>
+                </tr>
+            </thead>
+            <tbody>';
+
+    foreach ($items as $index => $item) {
         $html .= '
-                        </tbody>
-                    </table>
-
-                    <div class="total">
-                        Total Estimated Cost: UGX ' . number_format($totalCost, 2) . '
-                    </div>
-
-                    <p>Please provide your best pricing and availability for these items. The estimated costs shown are based on our current market research.</p>';
-
-        if (!empty($notes)) {
-            $html .= '<p><strong>Additional Notes:</strong><br>' . nl2br(htmlspecialchars($notes)) . '</p>';
-        }
-
-        $html .= '
-                    <p>We look forward to your prompt response and competitive pricing.</p>
-
-                    <p>Best regards,<br>
-                    ' . $createdBy . '<br>
-                    ' . ($school ? $school->name : 'Edumall Laboratory Management') . '<br>
-                    Laboratory Department</p>
-                </div>
-
-                <div class="footer">
-                    <p>This email was sent from the Edumall Laboratory Management System.</p>
-                    <p>Contact: info@edumall.com | Phone: +256 XXX XXX XXX</p>
-                </div>
-            </div>
-        </body>
-        </html>';
-
-        return $html;
+                <tr>
+                    <td>' . ($index + 1) . '</td>
+                    <td>' . htmlspecialchars($item['name']) . '</td>
+                    <td>' . $item['quantity'] . '</td>
+                    <td>UGX ' . number_format($item['estimatedCost'], 2) . '</td>
+                </tr>';
     }
+
+    $html .= '
+            </tbody>
+        </table>
+
+        <div class="total">
+            Total Estimated Cost: UGX ' . number_format($totalCost, 2) . '
+        </div>';
+
+    if (!empty($notes)) {
+        $html .= '
+        <p><strong>Additional Notes:</strong><br>' . nl2br(htmlspecialchars($notes)) . '</p>';
+    }
+
+    $html .= '
+        <p>We appreciate your prompt response and competitive pricing.</p>
+
+        <p>
+            Kind regards,<br>
+            <strong>' . $createdBy . '</strong><br>
+            ' . ($school ? $school->name : 'Edumall Laboratory Management') . '
+        </p>
+    </div>
+
+    <div class="footer">
+        <strong>Edumall Solutions Limited</strong><br>
+        Laboratory Management System<br><br>
+        📧 <a href="mailto:edumallug@gmail.com">edumallug@gmail.com</a> &nbsp;|&nbsp;
+        ☎ +256 781 978 910<br><br>
+        © ' . date('Y') . ' Edumall. All rights reserved.
+    </div>
+
+</div>
+</body>
+</html>';
+
+    return $html;
+}
+
 }

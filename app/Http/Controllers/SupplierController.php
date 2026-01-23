@@ -26,17 +26,23 @@ class SupplierController extends Controller
 
         $request->validate([
             'name' => 'required|string|unique:suppliers,name,NULL,id,tenant_id,' . $user->tenant_id,
-            'contact' => 'nullable|string',
+            'phone' => 'nullable|string',
             'email' => 'nullable|email',
+            'website' => 'nullable|url',
             'address' => 'nullable|string',
+            'contactPerson' => 'nullable|string',
+            'isActive' => 'nullable|boolean',
         ]);
 
         $supplier = Supplier::create([
             'tenant_id' => $user->tenant_id,
             'name' => $request->name,
-            'contact' => $request->contact,
+            'phone' => $request->phone,
             'email' => $request->email,
+            'website' => $request->website,
             'address' => $request->address,
+            'contact_person' => $request->contactPerson,
+            'is_active' => $request->isActive ?? true,
         ]);
 
         return response()->json($supplier, 201);
@@ -61,12 +67,15 @@ class SupplierController extends Controller
 
         $request->validate([
             'name' => 'required|string|unique:suppliers,name,' . $supplier->id . ',id,tenant_id,' . $user->tenant_id,
-            'contact' => 'nullable|string',
+            'phone' => 'nullable|string',
             'email' => 'nullable|email',
+            'website' => 'nullable|url',
             'address' => 'nullable|string',
+            'contactPerson' => 'nullable|string',
+            'isActive' => 'nullable|boolean',
         ]);
 
-        $supplier->update($request->only(['name', 'contact', 'email', 'address']));
+        $supplier->update($request->only(['name', 'phone', 'email', 'website', 'address', 'contact_person', 'is_active']));
         return response()->json($supplier);
     }
 

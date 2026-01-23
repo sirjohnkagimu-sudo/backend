@@ -33,6 +33,10 @@
 
         Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
         Route::get('/orders', [OrderController::class, 'getAllOrders'])->name('orders.index');
+        Route::get('/quotations', function () {
+            session(['title' => 'Quotations']);
+            return view('quotations');
+        })->name('quotations.index');
         Route::get('/dashboard/orders', [OrderController::class, 'dashboard'])->name('dashboard.orders');
         Route::post('/orders/{order}/confirm-payment', [OrderController::class, 'confirmPayment'])->name('orders.confirmPayment');
         Route::get('/stationaries', [StationaryController::class, 'index'])->name('index.stationaries');

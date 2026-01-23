@@ -13,7 +13,11 @@ class Supplier extends Model
         'tenant_id',
         'name',
         'contact',
+        'phone',
         'email',
+        'website',
         'address',
+        'contact_person',
+        'is_active',
     ];
 }
