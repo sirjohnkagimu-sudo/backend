@@ -11,12 +11,23 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('suppliers')) {
         Schema::table('suppliers', function (Blueprint $table) {
-            $table->string('phone')->nullable();
-            $table->string('website')->nullable();
-            $table->string('contact_person')->nullable();
-            $table->boolean('is_active')->default(true);
+            if (!Schema::hasColumn('suppliers', 'phone')) {
+                $table->string('phone')->nullable();
+            }
+            if (!Schema::hasColumn('suppliers', 'website')) {
+                $table->string('website')->nullable();
+            }
+            if (!Schema::hasColumn('suppliers', 'contact_person')) {
+                $table->string('contact_person')->nullable();
+            }
+            if (!Schema::hasColumn('suppliers', 'is_active')) {
+                $table->boolean('is_active')->default(true);
+            }
         });
+        }
+
     }
 
     /**
@@ -25,7 +36,22 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('suppliers', function (Blueprint $table) {
-            $table->dropColumn(['phone', 'website']);
+            $columnsToDrop = [];
+            if (Schema::hasColumn('suppliers', 'phone')) {
+                $columnsToDrop[] = 'phone';
+            }
+            if (Schema::hasColumn('suppliers', 'website')) {
+                $columnsToDrop[] = 'website';
+            }
+            if (Schema::hasColumn('suppliers', 'contact_person')) {
+                $columnsToDrop[] = 'contact_person';
+            }
+            if (Schema::hasColumn('suppliers', 'is_active')) {
+                $columnsToDrop[] = 'is_active';
+            }
+            if (!empty($columnsToDrop)) {
+                $table->dropColumn($columnsToDrop);
+            }
         });
     }
 };
