@@ -196,7 +196,7 @@ body {
     <div class="header">
         <div class="header-content">
             <img src="' . $logo . '" alt="Edumall Logo">
-            <h1>QUOTATION REQUEST</h1>
+            <h1>QUOTATION ACCEPTANCE & INVOICE REQUEST</h1>
             <p>Laboratory Procurement</p>
         </div>
     </div>
@@ -212,15 +212,19 @@ body {
 
         <p>Dear Supplier,</p>
 
-        <p>We kindly request a quotation for the following laboratory items:</p>
-
+          <p>
+        Thank you for the quotation. I would like to formally accept the terms outlined
+        in quotation <strong>ID: ' . htmlspecialchars($data['quotation_id']) . '</strong>
+        for the following laboratory items:
+        </p>
         <table class="items-table">
             <thead>
                 <tr>
                     <th>#</th>
                     <th>Item Name</th>
                     <th>Quantity</th>
-                    <th>Estimated Cost (UGX)</th>
+                    <th>Unit</th>
+                    <th> Total Estimated Cost (UGX)</th>
                 </tr>
             </thead>
             <tbody>';
@@ -231,6 +235,7 @@ body {
                     <td>' . ($index + 1) . '</td>
                     <td>' . htmlspecialchars($item['name']) . '</td>
                     <td>' . $item['quantity'] . '</td>
+                    <td>' . htmlspecialchars($item['unit'] ?? 'N/A') . '</td>
                     <td>UGX ' . number_format($item['estimatedCost'], 2) . '</td>
                 </tr>';
     }
