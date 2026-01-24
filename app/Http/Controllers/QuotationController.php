@@ -17,8 +17,8 @@ class QuotationController extends Controller
     {
         $request->validate([
             'quotation_id' => 'required|string',
-            'recipient_email' => 'required|email',
-            'notes' => 'nullable|string',
+            'notes' => 'required|string',
+            'contact_details' => 'required|string',
             'quotation_data' => 'required|array',
             'quotation_data.items' => 'required|array',
             'quotation_data.totalEstimatedCost' => 'required|numeric',
@@ -30,9 +30,9 @@ class QuotationController extends Controller
         $school = $user->school;
 
         try {
-            // Send email with quotation details
+            // Send email with quotation details to Edumall
             Mail::send([], [], function ($message) use ($request, $school) {
-                $message->to($request->recipient_email)
+                $message->to('edumallug@gmail.com')
                         ->subject('Quotation Request - ' . count($request->quotation_data['items']) . ' Items - ' . ($school ? $school->name : 'Edumall System'))
                         ->html($this->buildEmailTemplate($request->all(), $school));
             });
@@ -40,7 +40,7 @@ class QuotationController extends Controller
             return response()->json([
                 'message' => 'Quotation sent successfully',
                 'details' => [
-                    'recipient' => $request->recipient_email,
+                    'recipient' => 'edumallug@gmail.com',
                     'items_count' => count($request->quotation_data['items']),
                     'total_cost' => $request->quotation_data['totalEstimatedCost']
                 ]
@@ -76,6 +76,7 @@ class QuotationController extends Controller
    $createdDate = $quotation['createdDate'];
    $createdBy = $quotation['createdBy'];
    $notes = $data['notes'] ?? '';
+   $contactDetails = $data['contact_details'] ?? '';
    $user = $data['user'] ?? null;
 
     $headerBg = 'https://i.imghippo.com/files/QaUM5275qQ.jpg';
@@ -204,6 +205,7 @@ body {
         <div class="info-box">
             <strong>From:</strong> ' . ($school ? $school->name : 'Edumall System') . '<br>
             <strong>Requested By:</strong> ' . $createdBy . '<br>
+            <strong>Contact Details:</strong> ' . htmlspecialchars($contactDetails) . '<br>
             <strong>Date:</strong> ' . $createdDate . '<br>
             <strong>Quotation ID:</strong> ' . $data['quotation_id'] . '
         </div>
