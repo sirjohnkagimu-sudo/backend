@@ -94,4 +94,12 @@ class ItemController extends Controller
             ->with(['category', 'supplier', 'location'])
             ->get();
     }
+
+    public function getByLocation($locationId)
+    {
+        return Item::where('location_id', $locationId)
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->with(['category', 'supplier', 'location'])
+            ->get();
+    }
 }

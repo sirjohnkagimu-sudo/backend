@@ -68,6 +68,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/analytics', [ReportController::class, 'analytics']);
 
     Route::apiResource('items', ItemController::class);
+    Route::get('/items/location/{locationId}', [ItemController::class, 'getByLocation']);
     Route::apiResource('suppliers', SupplierController::class);
     Route::apiResource('locations', LocationController::class);
     Route::apiResource('categories', CategoryController::class);

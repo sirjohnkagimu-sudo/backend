@@ -69,11 +69,9 @@ class LocationController extends Controller
     public function destroy(Location $location)
     {
         $user = request()->user();
-        if (!$user || $user->role_id !== 1 || $location->tenant_id !== $user->tenant_id) {
+        if (!$user || $user->role_id !== 1) {
             return response()->json(['error' => 'Unauthorized. Only school administrators can manage locations.'], 403);
         }
-
-               $this->authorize('delete', $location);
 
         if ($location->items()->exists()) {
             return response()->json([
