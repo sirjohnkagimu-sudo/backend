@@ -42,6 +42,7 @@ Route::get('/users', [AuthController::class, 'getAllUsers']);
 
 // Authenticated routes
 Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/profile', [AuthController::class, 'getProfile']);
     Route::put('/profile', [AuthController::class, 'updateProfile']);
     Route::put('/change-password', [AuthController::class, 'changePassword']);
     Route::get('/cart/all', [CartController::class, 'allCarts']);
@@ -103,6 +104,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Department count
     Route::get('/departments/count', [AuthController::class, 'getDepartmentsCount']);
+    Route::get('/departments/unlocked', [AuthController::class, 'getUnlockedDepartments']);
 
     // Quotation routes
     Route::post('/quotations/send', [QuotationController::class, 'sendQuotation']);

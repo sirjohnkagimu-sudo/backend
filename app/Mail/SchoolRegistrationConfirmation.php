@@ -32,7 +32,7 @@ class SchoolRegistrationConfirmation extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            markdown: 'emails.school_registration_confirmation',
+            view: 'emails.school_registration_confirmation',
             with: [
                 'school' => $this->school,
             ]

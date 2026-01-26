@@ -73,7 +73,7 @@ class AuthController extends Controller
                 'email'           => $request->adminEmail,
                 'phone'           => $request->adminPhone,
                 'password'        => Hash::make($request->password),
-                'tenant_id'       => $school->id,
+                'tenant_id'       => $school->centre_number,
                 'role_id'         => 1,
                 'is_school_admin' => true,
             ]);
@@ -544,6 +544,24 @@ class AuthController extends Controller
 
     /**
      * ============================
+     * GET PROFILE INFORMATION
+     * ============================
+     */
+    public function getProfile(Request $request)
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'firstName' => $user->firstName,
+            'lastName' => $user->lastName,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'accountType' => $user->accountType,
+        ]);
+    }
+
+    /**
+     * ============================
      * GET SCHOOL INFORMATION
      * ============================
      */
@@ -577,6 +595,29 @@ class AuthController extends Controller
 
         return response()->json([
             'count' => $departmentsCount,
+        ]);
+    }
+
+    /**
+     * ============================
+     * GET UNLOCKED DEPARTMENTS
+     * ============================
+     */
+    public function getUnlockedDepartments(Request $request)
+    {
+        $user = $request->user();
+
+        // For now, hardcode based on inventory page
+        // Laboratory is always unlocked, others are locked
+        $unlockedDepartments = ['Laboratory'];
+
+        // In future, this could be based on school data or feature flags
+        // if ($user->school && isset($user->school->data['unlocked_departments'])) {
+        //     $unlockedDepartments = $user->school->data['unlocked_departments'];
+        // }
+
+        return response()->json([
+            'unlocked_departments' => $unlockedDepartments,
         ]);
     }
 }
