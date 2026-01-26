@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Order;
+use App\Models\Notification;
 use App\Mail\OrderConfirmation;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Http;
@@ -105,6 +106,20 @@ class OrderController extends Controller
                 'price' => $item['price'],
             ]);
         }
+
+        // Create order notification
+        Notification::create([
+            'user_id' => null, // Site-wide
+            'type' => 'invoice',
+            'title' => 'New Order Received',
+            'message' => "Order #{$order->id} has been placed by {$order->customer_name}",
+            'details' => "Total: UGX " . number_format($order->total, 0),
+            'is_read' => false,
+            'is_ignored' => false,
+            'timestamp' => now(),
+            'priority' => 'high',
+            'related_item' => "Order #{$order->id}"
+        ]);
 
         // Send confirmation email
         try {

@@ -75,12 +75,16 @@ class SchoolController extends Controller
         $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'district' => 'sometimes|nullable|string|max:255',
+            'county' => 'sometimes|nullable|string|max:255',
+            'subcounty' => 'sometimes|nullable|string|max:255',
+            'parish' => 'sometimes|nullable|string|max:255',
+            'village' => 'sometimes|nullable|string|max:255',
             'admin_name' => 'sometimes|nullable|string|max:255',
             'admin_email' => 'sometimes|nullable|email',
             'admin_phone' => 'sometimes|nullable|string|max:50',
         ]);
 
-        $user->school->update($request->only(['name', 'district', 'admin_name', 'admin_email', 'admin_phone']));
+        $user->school->update($request->only(['name', 'district', 'county', 'subcounty', 'parish', 'village', 'admin_name', 'admin_email', 'admin_phone']));
 
         return response()->json([
             'message' => 'School information updated successfully',

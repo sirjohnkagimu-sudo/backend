@@ -28,6 +28,7 @@ use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\LabCalendarController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\QuotationController;
+use App\Http\Controllers\AuditController;
 
 
 // Public login routes (no middleware)
@@ -98,9 +99,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
     Route::put('/notifications/{id}/ignore', [NotificationController::class, 'ignore']);
     Route::delete('/notifications/read/clear', [NotificationController::class, 'clearRead']);
+    Route::post('/notifications/sample', [NotificationController::class, 'createSample']);
+
+    // Department count
+    Route::get('/departments/count', [AuthController::class, 'getDepartmentsCount']);
 
     // Quotation routes
     Route::post('/quotations/send', [QuotationController::class, 'sendQuotation']);
+
+    // Audit trail (admin only)
+    Route::get('/audit-trail', [AuditController::class, 'index']);
 
 });
 

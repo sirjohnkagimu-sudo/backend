@@ -18,7 +18,9 @@ class LabAccessCodeController extends Controller
             return response()->json(['error' => 'Unauthorized. Only school administrators can manage lab access codes.'], 403);
         }
 
-        return response()->json(LabAccessCode::where('school_id', $user->tenant_id)->get());
+        return response()->json(LabAccessCode::where('school_id', $user->tenant_id)
+            ->orderBy('last_used_at', 'desc')
+            ->get());
     }
 
     /**

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -79,6 +80,9 @@ class AuthController extends Controller
             ]);
         });
 
+        // Send welcome email
+        Mail::to($school->admin_email)->send(new \App\Mail\SchoolRegistrationConfirmation($school));
+
         return response()->json([
             'message' => 'Registration successful',
             'user'    => $user,
@@ -112,6 +116,9 @@ class AuthController extends Controller
         if ($user->school && $user->school->status !== 'active') {
             return response()->json(['message' => 'Institution account is not active'], 403);
         }
+
+        // Update last login
+        $user->update(['last_login' => now()]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -156,6 +163,12 @@ class AuthController extends Controller
             throw ValidationException::withMessages(['access_code' => ['Invalid or expired access code']]);
         }
 
+        // Update last used timestamp
+        $accessCode->update(['last_used_at' => now()]);
+
+        // Update last login for admin
+        $admin->update(['last_login' => now()]);
+
         // Login as the admin but present as access user with role 2
         $token = $admin->createToken('auth_token')->plainTextToken;
 
@@ -172,9 +185,18 @@ class AuthController extends Controller
             'accountType'     => 'institution',
             'permissions'     => $accessCode->permissions,
             'school' => $admin->school ? [
-                'id'     => $admin->school->id,
-                'name'   => $admin->school->name,
-                'status' => $admin->school->status,
+                'id'         => $admin->school->id,
+                'name'       => $admin->school->name,
+                'centre_number' => $admin->school->centre_number,
+                'district'   => $admin->school->district,
+                'county'     => $admin->school->county,
+                'subcounty'  => $admin->school->subcounty,
+                'parish'     => $admin->school->parish,
+                'village'    => $admin->school->village,
+                'admin_name' => $admin->school->admin_name,
+                'admin_email' => $admin->school->admin_email,
+                'admin_phone' => $admin->school->admin_phone,
+                'status'     => $admin->school->status,
             ] : null,
         ];
 
@@ -409,7 +431,10 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        $users = User::where('tenant_id', $user->tenant_id)->with('role')->get();
+        $users = User::where('tenant_id', $user->tenant_id)
+            ->with('role')
+            ->orderBy('last_login', 'desc')
+            ->get();
 
         return response()->json(['users' => $users]);
     }
@@ -451,9 +476,18 @@ class AuthController extends Controller
             'tenant_id'       => $user->tenant_id,
             'accountType'     => 'institution',
             'school' => $user->school ? [
-                'id'     => $user->school->id,
-                'name'   => $user->school->name,
-                'status' => $user->school->status,
+                'id'         => $user->school->id,
+                'name'       => $user->school->name,
+                'centre_number' => $user->school->centre_number,
+                'district'   => $user->school->district,
+                'county'     => $user->school->county,
+                'subcounty'  => $user->school->subcounty,
+                'parish'     => $user->school->parish,
+                'village'    => $user->school->village,
+                'admin_name' => $user->school->admin_name,
+                'admin_email' => $user->school->admin_email,
+                'admin_phone' => $user->school->admin_phone,
+                'status'     => $user->school->status,
             ] : null,
         ];
     }
@@ -524,6 +558,26 @@ class AuthController extends Controller
 
         return response()->json([
             'school' => $user->school,
+        ]);
+    }
+
+    /**
+     * ============================
+     * GET DEPARTMENTS COUNT
+     * ============================
+     */
+    public function getDepartmentsCount(Request $request)
+    {
+        $user = $request->user();
+
+        // Count distinct departments that have users in this tenant
+        $departmentsCount = User::where('tenant_id', $user->tenant_id)
+            ->whereNotNull('department')
+            ->distinct('department')
+            ->count('department');
+
+        return response()->json([
+            'count' => $departmentsCount,
         ]);
     }
 }

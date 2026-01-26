@@ -21,4 +21,14 @@ class TransactionUpdateHistory extends Model
         'previous_values' => 'array',
         'new_values' => 'array',
     ];
+
+    public function transaction()
+    {
+        return $this->belongsTo(StockMovement::class, 'inventory_transaction_id');
+    }
+
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
 }

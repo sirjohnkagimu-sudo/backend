@@ -39,6 +39,7 @@ class User extends Authenticatable
       'mobileMoneyNumber',
       'paymentMethods',
       'department',
+      'last_login',
 
   ];
 
@@ -63,6 +64,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_login' => 'datetime',
         ];
     }
 

@@ -14,8 +14,10 @@ class NotificationController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $notifications = Notification::where('user_id', $user->id)
-            ->where('is_ignored', false)
+
+        // For now, return all notifications (site-wide)
+        // TODO: Implement proper notification targeting
+        $notifications = Notification::where('is_ignored', false)
             ->orderBy('timestamp', 'desc')
             ->get();
 
@@ -31,8 +33,7 @@ class NotificationController extends Controller
      */
     public function markAsRead($id)
     {
-        $user = Auth::user();
-        $notification = Notification::where('user_id', $user->id)->find($id);
+        $notification = Notification::find($id);
 
         if (!$notification) {
             return response()->json([
@@ -56,8 +57,7 @@ class NotificationController extends Controller
      */
     public function destroy($id)
     {
-        $user = Auth::user();
-        $notification = Notification::where('user_id', $user->id)->find($id);
+        $notification = Notification::find($id);
 
         if (!$notification) {
             return response()->json([
@@ -79,8 +79,7 @@ class NotificationController extends Controller
      */
     public function ignore($id)
     {
-        $user = Auth::user();
-        $notification = Notification::where('user_id', $user->id)->find($id);
+        $notification = Notification::find($id);
 
         if (!$notification) {
             return response()->json([
@@ -112,6 +111,51 @@ class NotificationController extends Controller
         return response()->json([
             'status' => 200,
             'message' => 'Read notifications cleared successfully'
+        ]);
+    }
+
+    /**
+     * Create sample notifications for testing
+     */
+    public function createSample()
+    {
+        $samples = [
+            [
+                'type' => 'system',
+                'title' => 'System Maintenance',
+                'message' => 'Scheduled maintenance will occur tonight from 2 AM to 4 AM',
+                'details' => 'Services may be temporarily unavailable',
+                'priority' => 'low',
+            ],
+            [
+                'type' => 'alert',
+                'title' => 'Security Update',
+                'message' => 'New security features have been implemented',
+                'details' => 'Please review your account settings',
+                'priority' => 'medium',
+            ],
+            [
+                'type' => 'subscription',
+                'title' => 'Feature Update',
+                'message' => 'New lab management features are now available',
+                'details' => 'Check out the latest updates in your dashboard',
+                'priority' => 'low',
+            ],
+        ];
+
+        foreach ($samples as $sample) {
+            Notification::create(array_merge($sample, [
+                'user_id' => null,
+                'is_read' => false,
+                'is_ignored' => false,
+                'timestamp' => now(),
+                'related_item' => null,
+            ]));
+        }
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Sample notifications created'
         ]);
     }
 }

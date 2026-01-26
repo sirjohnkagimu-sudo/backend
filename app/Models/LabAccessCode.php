@@ -21,12 +21,14 @@ class LabAccessCode extends Model
         'created_by',
         'expires_at',
         'is_active',
+        'last_used_at',
     ];
 
     protected $casts = [
         'permissions' => 'array',
         'expires_at' => 'datetime',
         'is_active' => 'boolean',
+        'last_used_at' => 'datetime',
     ];
 
     public function school(): BelongsTo
