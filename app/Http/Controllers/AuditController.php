@@ -44,8 +44,8 @@ class AuditController extends Controller
                 'description' => ucfirst($movement->type) . ' ' . $movement->quantity . ' units of ' . ($movement->item->name ?? 'Unknown Item'),
                 'user' => [
                     'id' => $movement->created_by,
-                    'name' => $movement->creator->name ?? 'Unknown User',
-                    'email' => $movement->creator->email ?? '',
+                    'name' => $movement->creator->name ?? ($user->firstName . ' ' . $user->lastName),
+                    'email' => $movement->creator->email ?? $user->email,
                 ],
                 'entity' => [
                     'id' => $movement->item_id,
@@ -88,8 +88,8 @@ class AuditController extends Controller
                 'description' => 'Updated stock movement: ' . ($history->update_reason ?? 'No reason provided'),
                 'user' => [
                     'id' => $history->updated_by,
-                    'name' => $history->updater->name ?? 'Unknown User',
-                    'email' => $history->updater->email ?? '',
+                    'name' => $history->updater->name ?? ($user->firstName . ' ' . $user->lastName),
+                    'email' => $history->updater->email ?? $user->email,
                 ],
                 'entity' => [
                     'id' => $history->inventory_transaction_id,
@@ -105,7 +105,7 @@ class AuditController extends Controller
 
         // 3. Item Changes (creation/updates)
         $items = Item::where('tenant_id', $tenantId)
-            ->with(['supplier', 'location'])
+            ->with(['supplier', 'location', 'creator'])
             ->orderBy('updated_at', 'desc')
             ->get();
 
@@ -118,9 +118,9 @@ class AuditController extends Controller
                     'action' => 'create',
                     'description' => 'Created new item: ' . $item->name,
                     'user' => [
-                        'id' => $user->id, // We don't track who created items currently
-                        'name' => 'System',
-                        'email' => '',
+                        'id' => $item->created_by ?: $user->id,
+                        'name' => $item->creator->name ?? ($user->firstName . ' ' . $user->lastName),
+                        'email' => $item->creator->email ?? $user->email,
                     ],
                     'entity' => [
                         'id' => $item->id,
@@ -134,6 +134,7 @@ class AuditController extends Controller
 
         // 4. Supplier Changes
         $suppliers = Supplier::where('tenant_id', $tenantId)
+            ->with('creator')
             ->orderBy('updated_at', 'desc')
             ->get();
 
@@ -145,9 +146,9 @@ class AuditController extends Controller
                     'action' => 'create',
                     'description' => 'Created new supplier: ' . $supplier->name,
                     'user' => [
-                        'id' => $user->id,
-                        'name' => 'System',
-                        'email' => '',
+                        'id' => $supplier->created_by ?: $user->id,
+                        'name' => $supplier->creator->name ?? ($user->firstName . ' ' . $user->lastName),
+                        'email' => $supplier->creator->email ?? $user->email,
                     ],
                     'entity' => [
                         'id' => $supplier->id,
@@ -161,6 +162,7 @@ class AuditController extends Controller
 
         // 5. Location Changes
         $locations = Location::where('tenant_id', $tenantId)
+            ->with('creator')
             ->orderBy('updated_at', 'desc')
             ->get();
 
@@ -172,9 +174,9 @@ class AuditController extends Controller
                     'action' => 'create',
                     'description' => 'Created new storage location: ' . $location->name,
                     'user' => [
-                        'id' => $user->id,
-                        'name' => 'System',
-                        'email' => '',
+                        'id' => $location->created_by ?: $user->id,
+                        'name' => $location->creator->name ?? ($user->firstName . ' ' . $user->lastName),
+                        'email' => $location->creator->email ?? $user->email,
                     ],
                     'entity' => [
                         'id' => $location->id,

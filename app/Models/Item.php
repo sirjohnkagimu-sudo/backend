@@ -10,6 +10,7 @@ class Item extends Model
     use BelongsToTenant;
     protected $fillable = [
         'tenant_id',
+        'created_by',
         'name',
         'category_id',
         'supplier_id',
@@ -37,5 +38,9 @@ class Item extends Model
 
     public function stockMovements() {
         return $this->hasMany(StockMovement::class);
+    }
+
+    public function creator() {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

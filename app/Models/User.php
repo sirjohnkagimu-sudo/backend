@@ -82,7 +82,7 @@ class User extends Authenticatable
 
         public function school()
         {
-            return $this->belongsTo(School::class, 'tenant_id');
+            return $this->belongsTo(School::class, 'tenant_id', 'centre_number');
         }
 
 

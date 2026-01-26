@@ -40,6 +40,7 @@ class ItemController extends Controller
         ]);
 
         $validated['tenant_id'] = $user->tenant_id;
+        $validated['created_by'] = $user->id;
 
         return Item::create($validated);
     }

@@ -44,7 +44,6 @@ class AuthController extends Controller
 
             // Create the school (tenant)
             $school = School::create([
-                'id'       => Str::uuid(),
                 'name'     => $request->institution_name,
                 'centre_number' => $request->centre_number,
                 'district' => $request->district,

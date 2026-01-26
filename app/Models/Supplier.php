@@ -11,6 +11,7 @@ class Supplier extends Model
 
     protected $fillable = [
         'tenant_id',
+        'created_by',
         'name',
         'contact',
         'phone',
@@ -20,4 +21,8 @@ class Supplier extends Model
         'contact_person',
         'is_active',
     ];
+
+    public function creator() {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 }

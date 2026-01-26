@@ -36,6 +36,7 @@ class SupplierController extends Controller
 
         $supplier = Supplier::create([
             'tenant_id' => $user->tenant_id,
+            'created_by' => $user->id,
             'name' => $request->name,
             'phone' => $request->phone,
             'email' => $request->email,

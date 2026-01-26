@@ -32,6 +32,7 @@ class LocationController extends Controller
 
         $location = Location::create([
             'tenant_id' => $user->tenant_id,
+            'created_by' => $user->id,
             'name' => $data['name'],
             'type' => $request->type ?? 'shelf',
             'lab_type' => $request->labType ?? 'chemistry',

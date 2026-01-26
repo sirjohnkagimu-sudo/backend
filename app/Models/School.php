@@ -10,11 +10,11 @@ class School extends Model
     use HasFactory;
 
     protected $table = 'schools';
+    protected $primaryKey = 'centre_number';
     protected $keyType = 'string';
     public $incrementing = false;
 
     protected $fillable = [
-        'id',
         'name',
         'centre_number',
         'district',

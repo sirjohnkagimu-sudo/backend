@@ -11,6 +11,7 @@ class Location extends Model
 
     protected $fillable = [
         'tenant_id',
+        'created_by',
         'name',
         'type',
         'lab_type',
@@ -27,6 +28,10 @@ class Location extends Model
     public function getCurrentUsageAttribute()
     {
         return $this->items()->count();
+    }
+
+    public function creator() {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
 }

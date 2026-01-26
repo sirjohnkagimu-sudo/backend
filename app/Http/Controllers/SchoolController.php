@@ -6,6 +6,7 @@ use App\Mail\SchoolRegistrationConfirmation;
 use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class SchoolController extends Controller
 {
@@ -68,6 +69,13 @@ class SchoolController extends Controller
     {
         $user = $request->user();
 
+        Log::info('SchoolController updateSchool called', [
+            'user_id' => $user ? $user->id : null,
+            'user_email' => $user ? $user->email : null,
+            'is_school_admin' => $user ? $user->is_school_admin : null,
+            'request_data' => $request->all()
+        ]);
+
         if (!$user->school) {
             return response()->json(['message' => 'No school associated with this account'], 404);
         }
@@ -85,6 +93,11 @@ class SchoolController extends Controller
         ]);
 
         $user->school->update($request->only(['name', 'district', 'county', 'subcounty', 'parish', 'village', 'admin_name', 'admin_email', 'admin_phone']));
+
+        Log::info('School updated successfully', [
+            'school_id' => $user->school->id,
+            'updated_data' => $request->only(['name', 'district', 'county', 'subcounty', 'parish', 'village', 'admin_name', 'admin_email', 'admin_phone'])
+        ]);
 
         return response()->json([
             'message' => 'School information updated successfully',
