@@ -11,10 +11,77 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // First drop all foreign keys that reference schools.id
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
+        Schema::table('categories', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
+        Schema::table('suppliers', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
+        Schema::table('locations', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
+        Schema::table('items', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
+        Schema::table('stock_movements', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
+        Schema::table('lab_sessions', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
+        Schema::table('transactions', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
+        // Now change the primary key
         Schema::table('schools', function (Blueprint $table) {
-            $table->dropPrimary('id');
+            $table->dropPrimary();
             $table->dropColumn('id');
             $table->primary('centre_number');
+        });
+
+        // Recreate foreign keys to reference schools.centre_number
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreign('tenant_id')->references('centre_number')->on('schools')->onDelete('set null');
+        });
+
+        Schema::table('categories', function (Blueprint $table) {
+            $table->foreign('tenant_id')->references('centre_number')->on('schools')->onDelete('cascade');
+        });
+
+        Schema::table('suppliers', function (Blueprint $table) {
+            $table->foreign('tenant_id')->references('centre_number')->on('schools')->onDelete('cascade');
+        });
+
+        Schema::table('locations', function (Blueprint $table) {
+            $table->foreign('tenant_id')->references('centre_number')->on('schools')->onDelete('cascade');
+        });
+
+        Schema::table('items', function (Blueprint $table) {
+            $table->foreign('tenant_id')->references('centre_number')->on('schools')->onDelete('cascade');
+        });
+
+        Schema::table('stock_movements', function (Blueprint $table) {
+            $table->foreign('tenant_id')->references('centre_number')->on('schools')->onDelete('cascade');
+        });
+
+        Schema::table('lab_sessions', function (Blueprint $table) {
+            $table->foreign('tenant_id')->references('centre_number')->on('schools')->onDelete('cascade');
+        });
+
+        Schema::table('transactions', function (Blueprint $table) {
+            $table->foreign('tenant_id')->references('centre_number')->on('schools')->onDelete('cascade');
         });
     }
 
@@ -23,9 +90,76 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Drop the updated foreign keys
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
+        Schema::table('categories', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
+        Schema::table('suppliers', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
+        Schema::table('locations', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
+        Schema::table('items', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
+        Schema::table('stock_movements', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
+        Schema::table('lab_sessions', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
+        Schema::table('transactions', function (Blueprint $table) {
+            $table->dropForeign(['tenant_id']);
+        });
+
+        // Reverse the primary key change
         Schema::table('schools', function (Blueprint $table) {
-            $table->dropPrimary('centre_number');
+            $table->dropPrimary();
             $table->uuid('id')->primary();
+        });
+
+        // Recreate original foreign keys
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreign('tenant_id')->references('id')->on('schools')->onDelete('set null');
+        });
+
+        Schema::table('categories', function (Blueprint $table) {
+            $table->foreign('tenant_id')->references('id')->on('schools')->onDelete('cascade');
+        });
+
+        Schema::table('suppliers', function (Blueprint $table) {
+            $table->foreign('tenant_id')->references('id')->on('schools')->onDelete('cascade');
+        });
+
+        Schema::table('locations', function (Blueprint $table) {
+            $table->foreign('tenant_id')->references('id')->on('schools')->onDelete('cascade');
+        });
+
+        Schema::table('items', function (Blueprint $table) {
+            $table->foreign('tenant_id')->references('id')->on('schools')->onDelete('cascade');
+        });
+
+        Schema::table('stock_movements', function (Blueprint $table) {
+            $table->foreign('tenant_id')->references('id')->on('schools')->onDelete('cascade');
+        });
+
+        Schema::table('lab_sessions', function (Blueprint $table) {
+            $table->foreign('tenant_id')->references('id')->on('schools')->onDelete('cascade');
+        });
+
+        Schema::table('transactions', function (Blueprint $table) {
+            $table->foreign('tenant_id')->references('id')->on('schools')->onDelete('cascade');
         });
     }
 };
