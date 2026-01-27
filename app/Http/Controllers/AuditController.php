@@ -8,6 +8,8 @@ use App\Models\TransactionUpdateHistory;
 use App\Models\Item;
 use App\Models\Supplier;
 use App\Models\Location;
+use App\Models\LabSession;
+use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -135,29 +137,27 @@ class AuditController extends Controller
         // 4. Supplier Changes
         $suppliers = Supplier::where('tenant_id', $tenantId)
             ->with('creator')
-            ->orderBy('updated_at', 'desc')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         foreach ($suppliers as $supplier) {
-            if ($supplier->created_at == $supplier->updated_at) {
-                $auditEntries[] = [
-                    'id' => 'sc_' . $supplier->id . '_create',
-                    'type' => 'supplier_change',
-                    'action' => 'create',
-                    'description' => 'Created new supplier: ' . $supplier->name,
-                    'user' => [
-                        'id' => $supplier->created_by ?: $user->id,
-                        'name' => $supplier->creator->name ?? ($user->firstName . ' ' . $user->lastName),
-                        'email' => $supplier->creator->email ?? $user->email,
-                    ],
-                    'entity' => [
-                        'id' => $supplier->id,
-                        'name' => $supplier->name,
-                        'type' => 'Supplier',
-                    ],
-                    'timestamp' => $supplier->created_at,
-                ];
-            }
+            $auditEntries[] = [
+                'id' => 'sc_' . $supplier->id . '_create',
+                'type' => 'supplier_change',
+                'action' => 'create',
+                'description' => 'Added supplier: ' . $supplier->name,
+                'user' => [
+                    'id' => $supplier->created_by ?: $user->id,
+                    'name' => $supplier->creator->name ?? ($user->firstName . ' ' . $user->lastName),
+                    'email' => $supplier->creator->email ?? $user->email,
+                ],
+                'entity' => [
+                    'id' => $supplier->id,
+                    'name' => $supplier->name,
+                    'type' => 'Supplier',
+                ],
+                'timestamp' => $supplier->created_at,
+            ];
         }
 
         // 5. Location Changes
@@ -186,6 +186,58 @@ class AuditController extends Controller
                     'timestamp' => $location->created_at,
                 ];
             }
+        }
+
+        // 6. Lab Sessions
+        $labSessions = LabSession::where('tenant_id', $tenantId)
+            ->with('creator')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        foreach ($labSessions as $session) {
+            $auditEntries[] = [
+                'id' => 'ls_' . $session->id,
+                'type' => 'lab_session',
+                'action' => 'create',
+                'description' => 'Created lab session: ' . $session->title,
+                'user' => [
+                    'id' => $session->created_by,
+                    'name' => $session->creator->name ?? ($user->firstName . ' ' . $user->lastName),
+                    'email' => $session->creator->email ?? $user->email,
+                ],
+                'entity' => [
+                    'id' => $session->id,
+                    'name' => $session->title,
+                    'type' => 'Lab Session',
+                ],
+                'timestamp' => $session->created_at,
+            ];
+        }
+
+        // 7. Activity Logs
+        $activityLogs = ActivityLog::where('tenant_id', $tenantId)
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        foreach ($activityLogs as $log) {
+            $auditEntries[] = [
+                'id' => 'al_' . $log->id,
+                'type' => $log->type,
+                'action' => $log->action,
+                'description' => $log->description,
+                'user' => [
+                    'id' => $log->user_id,
+                    'name' => $log->user->name ?? ($user->firstName . ' ' . $user->lastName),
+                    'email' => $log->user->email ?? $user->email,
+                ],
+                'entity' => [
+                    'id' => $log->id,
+                    'name' => $log->description,
+                    'type' => ucfirst($log->type),
+                ],
+                'timestamp' => $log->created_at,
+            ];
         }
 
         // Sort all entries by timestamp (newest first)

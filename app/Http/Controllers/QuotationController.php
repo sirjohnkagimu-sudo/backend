@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use App\Models\User;
 use App\Models\School;
+use App\Models\ActivityLog;
 
 class QuotationController extends Controller
 {
@@ -36,6 +37,21 @@ class QuotationController extends Controller
                         ->subject('Quotation Request - ' . count($request->quotation_data['items']) . ' Items - ' . ($school ? $school->name : 'Edumall System'))
                         ->html($this->buildEmailTemplate($request->all(), $school));
             });
+
+            // Log the activity
+            ActivityLog::create([
+                'tenant_id' => $user->tenant_id,
+                'user_id' => $user->id,
+                'action' => 'send',
+                'type' => 'quotation',
+                'description' => 'Sent quotation request for ' . count($request->quotation_data['items']) . ' items',
+                'metadata' => [
+                    'quotation_id' => $request->quotation_id,
+                    'items_count' => count($request->quotation_data['items']),
+                    'total_cost' => $request->quotation_data['totalEstimatedCost'],
+                    'recipient' => 'edumallug@gmail.com'
+                ]
+            ]);
 
             return response()->json([
                 'message' => 'Quotation sent successfully',
@@ -80,7 +96,7 @@ class QuotationController extends Controller
    $user = $data['user'] ?? null;
 
     $headerBg = 'https://i.imghippo.com/files/QaUM5275qQ.jpg';
-    $logo = 'https://i.imghippo.com/files/ajv8989ujg.png';
+    $logo = config('app.url') . '/images/logo.png';
 
     $html = '
 <!DOCTYPE html>
@@ -105,7 +121,7 @@ body {
 }
 .header {
     position: relative;
-    background: #B0E0E6;
+    background: #B0E0E6 url(' . $headerBg . ') no-repeat center center;
     background-size: cover;
     background-position: center;
     padding: 50px 20px;
@@ -115,7 +131,7 @@ body {
     content: "";
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.45);
+    background: rgba(0, 0, 0, 0.2);
 }
 .header-content {
     position: relative;

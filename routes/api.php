@@ -68,6 +68,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         // Analytics
     Route::get('/analytics', [ReportController::class, 'analytics']);
+    Route::post('/reports/log-download', [ReportController::class, 'logReportDownload']);
 
     Route::apiResource('items', ItemController::class);
     Route::get('/items/location/{locationId}', [ItemController::class, 'getByLocation']);

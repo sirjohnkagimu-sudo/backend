@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\LabAccessCode;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -55,5 +56,33 @@ class ReportController extends Controller
             'low_stock_items' => $lowStockItems,
             'total_value' => $totalValue,
         ]);
+    }
+
+    public function logReportDownload(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $request->validate([
+            'report_type' => 'required|string',
+            'format' => 'required|string',
+        ]);
+
+        // Log the activity
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id' => $user->id,
+            'action' => 'download',
+            'type' => 'report',
+            'description' => 'Downloaded ' . $request->report_type . ' report in ' . $request->format . ' format',
+            'metadata' => [
+                'report_type' => $request->report_type,
+                'format' => $request->format,
+            ]
+        ]);
+
+        return response()->json(['message' => 'Report download logged']);
     }
 }
