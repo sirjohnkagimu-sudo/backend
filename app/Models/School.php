@@ -10,7 +10,7 @@ class School extends Model
     use HasFactory;
 
     protected $table = 'schools';
-    protected $primaryKey = 'centre_number';
+    protected $primaryKey = 'id';
     protected $keyType = 'string';
     public $incrementing = false;
 
