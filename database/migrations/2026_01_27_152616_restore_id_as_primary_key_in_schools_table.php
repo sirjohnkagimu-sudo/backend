@@ -12,46 +12,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Drop the updated foreign keys
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['tenant_id']);
-        });
-
-        Schema::table('categories', function (Blueprint $table) {
-            $table->dropForeign(['tenant_id']);
-        });
-
-        Schema::table('suppliers', function (Blueprint $table) {
-            $table->dropForeign(['tenant_id']);
-        });
-
-        Schema::table('locations', function (Blueprint $table) {
-            $table->dropForeign(['tenant_id']);
-        });
-
-        Schema::table('items', function (Blueprint $table) {
-            $table->dropForeign(['tenant_id']);
-        });
-
-        Schema::table('stock_movements', function (Blueprint $table) {
-            $table->dropForeign(['tenant_id']);
-        });
-
-        Schema::table('lab_sessions', function (Blueprint $table) {
-            $table->dropForeign(['tenant_id']);
-        });
-
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->dropForeign(['tenant_id']);
-        });
-
-        Schema::table('teacher_passcodes', function (Blueprint $table) {
-            $table->dropForeign(['school_id']);
-        });
-
-        Schema::table('lab_access_codes', function (Blueprint $table) {
-            $table->dropForeign(['school_id']);
-        });
+        // Drop the updated foreign keys if they exist
+        $this->dropForeignIfExists('users', 'tenant_id');
+        $this->dropForeignIfExists('categories', 'tenant_id');
+        $this->dropForeignIfExists('suppliers', 'tenant_id');
+        $this->dropForeignIfExists('locations', 'tenant_id');
+        $this->dropForeignIfExists('items', 'tenant_id');
+        $this->dropForeignIfExists('stock_movements', 'tenant_id');
+        $this->dropForeignIfExists('lab_sessions', 'tenant_id');
+        $this->dropForeignIfExists('transactions', 'tenant_id');
+        $this->dropForeignIfExists('teacher_passcodes', 'school_id');
+        $this->dropForeignIfExists('lab_access_codes', 'school_id');
 
         // Add id column if it doesn't exist
         Schema::table('schools', function (Blueprint $table) {
@@ -107,6 +78,26 @@ return new class extends Migration
         Schema::table('lab_access_codes', function (Blueprint $table) {
             $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
         });
+    }
+
+    private function dropForeignIfExists(string $table, string $column): void
+    {
+        $foreignKeyName = $table . '_' . $column . '_foreign';
+
+        $exists = DB::select("
+            SELECT CONSTRAINT_NAME
+            FROM information_schema.TABLE_CONSTRAINTS
+            WHERE CONSTRAINT_SCHEMA = DATABASE()
+            AND TABLE_NAME = ?
+            AND CONSTRAINT_NAME = ?
+            AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+        ", [$table, $foreignKeyName]);
+
+        if (!empty($exists)) {
+            Schema::table($table, function (Blueprint $table) use ($column) {
+                $table->dropForeign([$column]);
+            });
+        }
     }
 
     /**
