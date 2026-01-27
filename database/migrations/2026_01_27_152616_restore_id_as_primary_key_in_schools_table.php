@@ -34,9 +34,12 @@ return new class extends Migration
         // Populate id with unique uuids
         DB::statement('UPDATE schools SET id = UUID()');
 
-        Schema::table('schools', function (Blueprint $table) {
-            $table->primary('id');
-        });
+        // Set primary key only if it's not already set
+        if (!$this->isPrimaryKeySet('schools', 'id')) {
+            Schema::table('schools', function (Blueprint $table) {
+                $table->primary('id');
+            });
+        }
 
         // Recreate original foreign keys
         Schema::table('users', function (Blueprint $table) {
@@ -98,6 +101,20 @@ return new class extends Migration
                 $table->dropForeign([$column]);
             });
         }
+    }
+
+    private function isPrimaryKeySet(string $table, string $column): bool
+    {
+        $result = DB::select("
+            SELECT COLUMN_NAME
+            FROM information_schema.KEY_COLUMN_USAGE
+            WHERE CONSTRAINT_SCHEMA = DATABASE()
+            AND TABLE_NAME = ?
+            AND COLUMN_NAME = ?
+            AND CONSTRAINT_NAME = 'PRIMARY'
+        ", [$table, $column]);
+
+        return !empty($result);
     }
 
     /**
