@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\School;
 use App\Models\LabAccessCode;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -183,6 +184,8 @@ class AuthController extends Controller
             'tenant_id'       => $admin->tenant_id,
             'accountType'     => 'institution',
             'permissions'     => $accessCode->permissions,
+            'department'      => $accessCode->department,
+            'featureFlags'    => ['labManagementEnabled' => true],
             'school' => $admin->school ? [
                 'id'         => $admin->school->id,
                 'name'       => $admin->school->name,
@@ -435,7 +438,35 @@ class AuthController extends Controller
             ->orderBy('last_login', 'desc')
             ->get();
 
-        return response()->json(['users' => $users]);
+        // Include lab access codes as pseudo-users
+        $accessCodes = LabAccessCode::where('school_id', $user->tenant_id)
+            ->orderBy('last_used_at', 'desc')
+            ->get();
+
+        $pseudoUsers = $accessCodes->map(function ($code) use ($user) {
+            return [
+                'id' => 'access_' . $code->id,
+                'firstName' => $code->user_name,
+                'lastName' => '',
+                'email' => $code->email ?: '',
+                'phone' => null,
+                'role_id' => 2,
+                'role' => ['id' => 2, 'name' => 'Access User'],
+                'department' => $code->department,
+                'is_school_admin' => false,
+                'tenant_id' => $user->tenant_id,
+                'accountType' => 'institution',
+                'permissions' => $code->permissions,
+                'isActive' => $code->is_active,
+                'last_login' => $code->last_used_at,
+                'created_at' => $code->created_at,
+                'updated_at' => $code->updated_at,
+            ];
+        });
+
+        $allUsers = $users->concat($pseudoUsers);
+
+        return response()->json(['users' => $allUsers]);
     }
 
     /**
