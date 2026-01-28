@@ -73,7 +73,7 @@ class AuthController extends Controller
                 'email'           => $request->adminEmail,
                 'phone'           => $request->adminPhone,
                 'password'        => Hash::make($request->password),
-                'tenant_id'       => $school->centre_number,
+                'tenant_id'       => $school->id,
                 'role_id'         => 1,
                 'is_school_admin' => true,
             ]);
