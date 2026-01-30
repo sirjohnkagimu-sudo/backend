@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\LabAccessCode;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class LabAccessCodeController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource (with caching).
      */
     public function index(Request $request)
     {
@@ -18,9 +19,21 @@ class LabAccessCodeController extends Controller
             return response()->json(['error' => 'Unauthorized. Only school administrators can manage lab access codes.'], 403);
         }
 
-        return response()->json(LabAccessCode::where('school_id', $user->tenant_id)
+        $cacheKey = "lab_access_codes_{$user->tenant_id}";
+
+        // Check cache first (3-minute cache)
+        if (Cache::has($cacheKey)) {
+            return response()->json(Cache::get($cacheKey));
+        }
+
+        $accessCodes = LabAccessCode::where('school_id', $user->tenant_id)
             ->orderBy('last_used_at', 'desc')
-            ->get());
+            ->get();
+
+        // Cache for 3 minutes
+        Cache::put($cacheKey, $accessCodes, 180);
+
+        return response()->json($accessCodes);
     }
 
     /**
@@ -54,6 +67,9 @@ class LabAccessCodeController extends Controller
             'department' => $request->department,
             'created_by' => $user->id,
         ]);
+
+        // Clear cache
+        Cache::forget("lab_access_codes_{$user->tenant_id}");
 
         return response()->json($labAccessCode, 201);
     }
@@ -97,6 +113,10 @@ class LabAccessCodeController extends Controller
         ]);
 
         $accessCode->update($request->only(['user_name', 'email', 'role', 'permissions', 'department', 'is_active']));
+
+        // Clear cache
+        Cache::forget("lab_access_codes_{$user->tenant_id}");
+
         return response()->json($accessCode);
     }
 
@@ -115,6 +135,10 @@ class LabAccessCodeController extends Controller
             ->firstOrFail();
 
         $accessCode->delete();
+
+        // Clear cache
+        Cache::forget("lab_access_codes_{$user->tenant_id}");
+
         return response()->json(['message' => 'Access code deleted']);
     }
 }

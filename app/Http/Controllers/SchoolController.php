@@ -16,6 +16,16 @@ class SchoolController extends Controller
         return response()->json(['schools' => $schools]);
     }
 
+    public function show(Request $request)
+    {
+        // Get the school for the authenticated user
+        $user = $request->user();
+        if (!$user || !$user->school) {
+            return response()->json(['message' => 'No school associated with this account'], 404);
+        }
+        return response()->json(['school' => $user->school]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([

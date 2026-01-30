@@ -9,6 +9,7 @@ use App\Models\LabAccessCode;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class ReportController extends Controller
 {
@@ -21,41 +22,54 @@ class ReportController extends Controller
 
         // Get tenant_id from user
         $tenantId = $user->tenant_id;
+        $cacheKey = "analytics_{$tenantId}";
 
-        // Total inventory items for the tenant
-        $totalItems = Item::where('tenant_id', $tenantId)->count();
+        // Check cache first (3-minute cache)
+        if (Cache::has($cacheKey)) {
+            return response()->json(Cache::get($cacheKey));
+        }
 
-        // Active users (lab access codes that are active)
+        // Get all analytics data in a single optimized query using subqueries
+        $analyticsData = DB::table('items')
+            ->where('tenant_id', $tenantId)
+            ->select(
+                DB::raw('COUNT(*) as total_items'),
+                DB::raw('SUM(quantity * unit_cost) as total_value')
+            )
+            ->first();
+
+        // Count low stock items
+        $lowStockItems = Item::where('tenant_id', $tenantId)
+            ->whereColumn('quantity', '<=', 'min_quantity')
+            ->count();
+
+        // Count active users
         $activeUsers = LabAccessCode::where('school_id', $tenantId)
             ->where('is_active', true)
             ->count();
 
-        // Total suppliers for the tenant
+        // Count total suppliers
         $totalSuppliers = Supplier::where('tenant_id', $tenantId)->count();
 
-        // Recent transactions (stock movements)
+        // Count recent transactions (last 30 days)
         $recentTransactions = DB::table('stock_movements')
             ->where('tenant_id', $tenantId)
             ->where('created_at', '>=', now()->subDays(30))
             ->count();
 
-        // Low stock items
-        $lowStockItems = Item::where('tenant_id', $tenantId)
-            ->whereColumn('quantity', '<=', 'min_quantity')
-            ->count();
-
-        // Total value of inventory
-        $totalValue = Item::where('tenant_id', $tenantId)
-            ->sum(DB::raw('quantity * unit_cost'));
-
-        return response()->json([
-            'total_items' => $totalItems,
+        $result = [
+            'total_items' => (int) $analyticsData->total_items,
             'active_users' => $activeUsers,
             'total_suppliers' => $totalSuppliers,
             'recent_transactions' => $recentTransactions,
             'low_stock_items' => $lowStockItems,
-            'total_value' => $totalValue,
-        ]);
+            'total_value' => (float) $analyticsData->total_value,
+        ];
+
+        // Cache for 3 minutes
+        Cache::put($cacheKey, $result, 180);
+
+        return response()->json($result);
     }
 
     public function logReportDownload(Request $request)

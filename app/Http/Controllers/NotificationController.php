@@ -5,27 +5,63 @@ namespace App\Http\Controllers;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class NotificationController extends Controller
 {
     /**
-     * Get all notifications for the authenticated user
+     * Get all notifications for the authenticated user (with caching and pagination)
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
+        $userId = $user ? $user->id : null;
+        $page = $request->get('page', 1);
+        $perPage = $request->get('per_page', 20);
+        $cacheKey = "notifications_{$userId}_{$page}_{$perPage}";
 
-        // For now, return all notifications (site-wide)
-        // TODO: Implement proper notification targeting
-        $notifications = Notification::where('is_ignored', false)
-            ->orderBy('timestamp', 'desc')
-            ->get();
+        // Check cache for first page only
+        if ($page === 1 && $userId) {
+            if (Cache::has($cacheKey)) {
+                return response()->json(Cache::get($cacheKey));
+            }
+        }
 
-        return response()->json([
-            'notifications' => $notifications,
+        $query = Notification::where('is_ignored', false)
+            ->orderBy('timestamp', 'desc');
+
+        // Add pagination
+        $notifications = $query->paginate($perPage);
+
+        $response = [
+            'notifications' => $notifications->items(),
+            'pagination' => [
+                'current_page' => $notifications->currentPage(),
+                'per_page' => $notifications->perPage(),
+                'total' => $notifications->total(),
+                'last_page' => $notifications->lastPage(),
+            ],
             'status' => 200,
             'message' => 'Notifications retrieved successfully'
-        ]);
+        ];
+
+        // Cache first page for 60 seconds
+        if ($page === 1 && $userId) {
+            Cache::put($cacheKey, $response, 60);
+        }
+
+        return response()->json($response);
+    }
+
+    /**
+     * Helper method to clear notification cache
+     */
+    private function clearNotificationCache($userId)
+    {
+        // Clear all notification cache keys for this user
+        Cache::forget("notifications_{$userId}_1_20");
+        Cache::forget("notifications_{$userId}_1_10");
+        Cache::forget("notifications_{$userId}_1_50");
     }
 
     /**
@@ -33,6 +69,7 @@ class NotificationController extends Controller
      */
     public function markAsRead($id)
     {
+        $user = Auth::user();
         $notification = Notification::find($id);
 
         if (!$notification) {
@@ -44,6 +81,11 @@ class NotificationController extends Controller
 
         $notification->is_read = true;
         $notification->save();
+
+        // Clear cache
+        if ($user) {
+            $this->clearNotificationCache($user->id);
+        }
 
         return response()->json([
             'notification' => $notification,
@@ -57,6 +99,7 @@ class NotificationController extends Controller
      */
     public function destroy($id)
     {
+        $user = Auth::user();
         $notification = Notification::find($id);
 
         if (!$notification) {
@@ -67,6 +110,11 @@ class NotificationController extends Controller
         }
 
         $notification->delete();
+
+        // Clear cache
+        if ($user) {
+            $this->clearNotificationCache($user->id);
+        }
 
         return response()->json([
             'status' => 200,
@@ -79,6 +127,7 @@ class NotificationController extends Controller
      */
     public function ignore($id)
     {
+        $user = Auth::user();
         $notification = Notification::find($id);
 
         if (!$notification) {
@@ -90,6 +139,11 @@ class NotificationController extends Controller
 
         $notification->is_ignored = true;
         $notification->save();
+
+        // Clear cache
+        if ($user) {
+            $this->clearNotificationCache($user->id);
+        }
 
         return response()->json([
             'notification' => $notification,
@@ -108,6 +162,11 @@ class NotificationController extends Controller
             ->where('is_read', true)
             ->delete();
 
+        // Clear cache
+        if ($user) {
+            $this->clearNotificationCache($user->id);
+        }
+
         return response()->json([
             'status' => 200,
             'message' => 'Read notifications cleared successfully'
@@ -119,6 +178,9 @@ class NotificationController extends Controller
      */
     public function createSample()
     {
+        $user = Auth::user();
+        $userId = $user ? $user->id : null;
+
         $samples = [
             [
                 'type' => 'system',
@@ -151,6 +213,11 @@ class NotificationController extends Controller
                 'timestamp' => now(),
                 'related_item' => null,
             ]));
+        }
+
+        // Clear cache
+        if ($userId) {
+            $this->clearNotificationCache($userId);
         }
 
         return response()->json([

@@ -29,6 +29,7 @@ use App\Http\Controllers\LabCalendarController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\AuditController;
+use App\Http\Controllers\DashboardController;
 
 
 // Public login routes (no middleware)
@@ -70,7 +71,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/analytics', [ReportController::class, 'analytics']);
     Route::post('/reports/log-download', [ReportController::class, 'logReportDownload']);
 
+    // Combined dashboard stats endpoint (reduces API calls from 4+ to 1)
+    Route::get('/dashboard/stats', [DashboardController::class, 'dashboardStats']);
+
     Route::apiResource('items', ItemController::class);
+    Route::post('/items/bulk-import', [ItemController::class, 'bulkImport']);
     Route::get('/items/location/{locationId}', [ItemController::class, 'getByLocation']);
     Route::apiResource('suppliers', SupplierController::class);
     Route::apiResource('locations', LocationController::class);
@@ -81,6 +86,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Admin routes for school management
     Route::apiResource('schools', SchoolController::class)->only(['index', 'store', 'update']);
+    Route::get('/school', [SchoolController::class, 'show']); // Single school for current tenant
     Route::put('/school/update', [SchoolController::class, 'updateSchool']);
 
     // Teacher passcode management

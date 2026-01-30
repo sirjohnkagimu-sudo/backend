@@ -112,6 +112,46 @@ class ItemController extends Controller
     }
 
     /**
+     * Bulk import items from Excel
+     */
+    public function bulkImport(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'items' => 'required|array',
+            'items.*.name' => 'required|string|max:255',
+            'items.*.category_id' => 'nullable|integer',
+            'items.*.category' => 'nullable|string|max:255',
+            'items.*.supplier_id' => 'nullable|integer',
+            'items.*.location_id' => 'nullable|integer',
+            'items.*.quantity' => 'required|integer|min:0',
+            'items.*.min_quantity' => 'nullable|integer|min:0',
+            'items.*.max_quantity' => 'nullable|integer|min:0',
+            'items.*.expiry_date' => 'nullable|date',
+            'items.*.unit' => 'nullable|string|max:50',
+            'items.*.unit_cost' => 'nullable|numeric|min:0',
+            'items.*.total_value' => 'nullable|numeric|min:0',
+            'items.*.notes' => 'nullable|string',
+        ]);
+
+        $items = $validated['items'];
+        $created = [];
+
+        foreach ($items as $itemData) {
+            $itemData['tenant_id'] = $user->tenant_id;
+            $itemData['created_by'] = $user->id;
+            $created[] = Item::create($itemData);
+        }
+
+        return response()->json([
+            'message' => 'Successfully imported ' . count($created) . ' items',
+            'count' => count($created),
+            'items' => $created,
+        ], 201);
+    }
+
+    /**
      * Create a low stock notification
      */
     private function createLowStockNotification(Item $item)
