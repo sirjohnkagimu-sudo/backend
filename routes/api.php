@@ -30,6 +30,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PantryController;
 
 
 // Public login routes (no middleware)
@@ -119,7 +120,66 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Audit trail (admin only)
     Route::get('/audit-trail', [AuditController::class, 'index']);
 
+    // ==================== PANTRY ROUTES ====================
+    Route::prefix('pantry')->group(function () {
+        // Pantry management
+        Route::get('/', [PantryController::class, 'index']);
+        Route::post('/', [PantryController::class, 'store']);
+        Route::get('/{pantry}', [PantryController::class, 'show']);
+        Route::put('/{pantry}', [PantryController::class, 'update']);
+        Route::delete('/{pantry}', [PantryController::class, 'destroy']);
+
+        // Dashboard stats
+        Route::get('/dashboard/stats', [PantryController::class, 'dashboardStats']);
+
+        // Sessions
+        Route::get('/sessions', [PantryController::class, 'sessions']);
+        Route::post('/sessions', [PantryController::class, 'storeSession']);
+        Route::put('/sessions/{session}', [PantryController::class, 'updateSession']);
+        Route::delete('/sessions/{session}', [PantryController::class, 'destroySession']);
+
+        // Meal plans
+        Route::get('/meal-plans', [PantryController::class, 'mealPlans']);
+        Route::post('/meal-plans', [PantryController::class, 'storeMealPlan']);
+        Route::put('/meal-plans/{mealPlan}', [PantryController::class, 'updateMealPlan']);
+        Route::post('/meal-plans/{mealPlan}/approve', [PantryController::class, 'approveMealPlan']);
+        Route::delete('/meal-plans/{mealPlan}', [PantryController::class, 'destroyMealPlan']);
+
+        // Items (uses Item model)
+        Route::get('/items', [PantryController::class, 'items']);
+
+        // Transactions
+        Route::get('/transactions', [PantryController::class, 'transactions']);
+
+        // Reports
+        Route::get('/reports', [PantryController::class, 'reports']);
+
+        // Suppliers
+        Route::get('/suppliers', [PantryController::class, 'suppliers']);
+
+        // Storage locations
+        Route::get('/storage-locations', [PantryController::class, 'storageLocations']);
+    });
+
+    // ==================== FURNITURE ROUTES ====================
+    Route::prefix('furniture')->group(function () {
+        Route::get('/', [FurnitureController::class, 'getFurniture']);
+        Route::get('/categories', [FurnitureController::class, 'getCategories']);
+        Route::get('/{id}', [FurnitureController::class, 'getFurnitureById']);
+    });
+
+    // ==================== SPORTS ROUTES ====================
+    Route::prefix('sports')->group(function () {
+        Route::get('/', [SportsController::class, 'getSports']);
+        Route::get('/categories', [SportsController::class, 'getCategories']);
+        Route::get('/{id}', [SportsController::class, 'getSportsById']);
+        Route::post('/', [SportsController::class, 'apiStore']);
+        Route::put('/{id}', [SportsController::class, 'apiUpdate']);
+        Route::delete('/{id}', [SportsController::class, 'apiDestroy']);
+    });
+
 });
+
 
 
 
@@ -141,4 +201,3 @@ Route::prefix('labs')->group(function () {
 });
 
 Route::get('/computer-labs', [ComputerLabController::class, 'getComputerLab'])->name('api.computer_lab');
-

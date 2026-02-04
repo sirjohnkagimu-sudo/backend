@@ -406,6 +406,10 @@ class AuthController extends Controller
         $request->validate([
             'name'         => 'sometimes|string|max:255',
             'district'     => 'sometimes|string|max:255',
+            'county'       => 'sometimes|string|max:255',
+            'subcounty'    => 'sometimes|string|max:255',
+            'parish'       => 'sometimes|string|max:255',
+            'village'      => 'sometimes|string|max:255',
             'admin_name'   => 'sometimes|string|max:255',
             'admin_email'  => 'sometimes|email|max:255',
             'admin_phone'  => 'sometimes|string|max:50',
@@ -416,7 +420,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'School not found'], 404);
         }
 
-        $school->update($request->only(['name', 'district', 'admin_name', 'admin_email', 'admin_phone']));
+        $school->update($request->only(['name', 'district', 'county', 'subcounty', 'parish', 'village', 'admin_name', 'admin_email', 'admin_phone']));
 
         return response()->json([
             'message' => 'School information updated successfully',

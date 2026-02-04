@@ -4,9 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Furniture;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class FurnitureController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth:sanctum']);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -15,6 +21,82 @@ class FurnitureController extends Controller
         session(['title' => 'Furniture']);
         $furnitures = Furniture::all();
         return view('furnitures.index', compact('furnitures'));
+    }
+
+    /**
+     * Get all furniture items as JSON (API)
+     */
+    public function getFurniture(Request $request): JsonResponse
+    {
+        $query = Furniture::query();
+
+        // Filter by category
+        if ($request->has('category') && $request->category !== 'all') {
+            $query->where('category', $request->category);
+        }
+
+        // Search by name
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('brand', 'like', "%{$search}%")
+                  ->orWhere('desc', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by condition
+        if ($request->has('condition')) {
+            $query->where('condition', $request->condition);
+        }
+
+        // Filter by in_stock status
+        if ($request->has('in_stock')) {
+            if ($request->in_stock === 'low') {
+                $query->where('in_stock', '>', 0)->where('in_stock', '<=', 5);
+            } elseif ($request->in_stock === 'out') {
+                $query->where('in_stock', 0);
+            } elseif ($request->in_stock === 'available') {
+                $query->where('in_stock', '>', 0);
+            }
+        }
+
+        // Sort by
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $query->orderBy($sortBy, $sortOrder);
+
+        // Pagination
+        $perPage = $request->get('per_page', 20);
+        $furnitures = $query->paginate($perPage);
+
+        return response()->json([
+            'data' => $furnitures->items(),
+            'meta' => [
+                'current_page' => $furnitures->currentPage(),
+                'last_page' => $furnitures->lastPage(),
+                'per_page' => $furnitures->perPage(),
+                'total' => $furnitures->total(),
+            ]
+        ]);
+    }
+
+    /**
+     * Get single furniture item by ID
+     */
+    public function getFurnitureById($id): JsonResponse
+    {
+        $furniture = Furniture::findOrFail($id);
+        return response()->json($furniture);
+    }
+
+    /**
+     * Get furniture categories
+     */
+    public function getCategories(): JsonResponse
+    {
+        $categories = Furniture::distinct()->pluck('category');
+        return response()->json($categories);
     }
 
     /**
@@ -44,7 +126,7 @@ class FurnitureController extends Controller
             'desc' => 'nullable|string|max:1000',
         ]);
 
-        
+
         $furniture = new Furniture();
         $furniture->name = $request->name;
         $furniture->category = $request->category;

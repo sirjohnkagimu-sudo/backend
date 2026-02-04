@@ -1,0 +1,72 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
+
+class Pantry extends Model
+{
+    use BelongsToTenant;
+
+    protected $table = 'pantries';
+
+    protected $fillable = [
+        'tenant_id',
+        'name',
+        'type',
+        'location',
+        'contact_person',
+        'contact_email',
+        'contact_phone',
+        'capacity',
+        'operating_hours_open',
+        'operating_hours_close',
+        'theme_color',
+        'logo',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'operating_hours_open' => 'datetime:H:i',
+        'operating_hours_close' => 'datetime:H:i',
+        'is_active' => 'boolean',
+        'capacity' => 'integer',
+    ];
+
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+    ];
+
+    // Relationship with items (through items table with department filter)
+    public function items()
+    {
+        return $this->hasMany(Item::class, 'tenant_id', 'tenant_id');
+    }
+
+    // Relationship with transactions
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'tenant_id', 'tenant_id');
+    }
+
+    // Relationship with sessions
+    public function sessions()
+    {
+        return $this->hasMany(PantrySession::class, 'tenant_id', 'tenant_id');
+    }
+
+    // Relationship with meal plans
+    public function mealPlans()
+    {
+        return $this->hasMany(MealPlan::class, 'tenant_id', 'tenant_id');
+    }
+
+    // Get full logo URL
+    public function getLogoUrlAttribute()
+    {
+        return $this->logo ? asset('storage/' . $this->logo) : null;
+    }
+}
