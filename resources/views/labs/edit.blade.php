@@ -111,6 +111,15 @@
                     <input type="text" name="unit" class="form-control" value="{{ old('unit', $lab->unit) }}">
                 </div>
 
+                <!-- Expiry Date -->
+                <div class="form-group">
+                    <label for="expiry_date">Expiry Date:</label>
+                    <input type="date" name="expiry_date" class="form-control" value="{{ old('expiry_date', $lab->expiry_date ? $lab->expiry_date->format('Y-m-d') : '') }}">
+                    @error('expiry_date')
+                        <div class="alert alert-danger mt-1 mb-1">{{ $message }}</div>
+                    @enderror
+                </div>
+
                 <!-- Condition -->
                 <div class="form-group">
                     <label for="condition">Condition:</label>

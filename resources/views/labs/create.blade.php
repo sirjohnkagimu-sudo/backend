@@ -132,6 +132,15 @@
                     @enderror
                 </div>
 
+                <!-- Expiry Date -->
+                <div class="form-group">
+                    <label for="expiry_date">Expiry Date:</label>
+                    <input type="date" name="expiry_date" class="form-control" value="{{ old('expiry_date') }}">
+                    @error('expiry_date')
+                        <div class="alert alert-danger mt-1 mb-1">{{ $message }}</div>
+                    @enderror
+                </div>
+
                 <!-- Condition -->
                 <div class="form-group">
                     <label for="condition">Condition:</label>

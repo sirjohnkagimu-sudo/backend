@@ -187,6 +187,7 @@ class LabController extends Controller
             'unit' => 'nullable|string',
             'desc' => 'nullable|string',
             'purchaseType' => 'nullable|string',
+            'expiry_date' => 'nullable|date',
         ];
 
         // Add subcategory validation dynamically
