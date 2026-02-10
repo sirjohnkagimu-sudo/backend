@@ -113,8 +113,32 @@ class AuthController extends Controller
             throw ValidationException::withMessages(['email' => ['Unauthorized. Admin access required.']]);
         }
 
-        if ($user->school && $user->school->status !== 'active') {
-            return response()->json(['message' => 'Institution account is not active'], 403);
+        // Check if user account is deactivated
+        if (isset($user->is_active) && !$user->is_active) {
+            return response()->json([
+                'message' => 'Your account has been deactivated. Please contact the super administrator.',
+                'account_status' => 'deactivated',
+                'support_contact' => 'support@edumall.com'
+            ], 403);
+        }
+
+        // Check school status
+        if ($user->school) {
+            if ($user->school->status === 'suspended') {
+                return response()->json([
+                    'message' => 'Your institution account has been SUSPENDED due to policy violations or unpaid dues. Please contact the super administrator to resolve this issue.',
+                    'account_status' => 'suspended',
+                    'school_status' => 'suspended',
+                    'support_contact' => 'support@edumall.com'
+                ], 403);
+            } elseif ($user->school->status === 'inactive') {
+                return response()->json([
+                    'message' => 'Your institution account is currently INACTIVE. Please contact the super administrator to reactivate your account.',
+                    'account_status' => 'inactive',
+                    'school_status' => 'inactive',
+                    'support_contact' => 'support@edumall.com'
+                ], 403);
+            }
         }
 
         // Update last login
@@ -148,9 +172,32 @@ class AuthController extends Controller
             throw ValidationException::withMessages(['admin_email' => ['Admin not found or not authorized']]);
         }
 
-        // Check if school is active
-        if ($admin->school && $admin->school->status !== 'active') {
-            return response()->json(['message' => 'Institution account is not active'], 403);
+        // Check if user account is deactivated
+        if (isset($admin->is_active) && !$admin->is_active) {
+            return response()->json([
+                'message' => 'Your account has been deactivated. Please contact the super administrator.',
+                'account_status' => 'deactivated',
+                'support_contact' => 'support@edumall.com'
+            ], 403);
+        }
+
+        // Check school status
+        if ($admin->school) {
+            if ($admin->school->status === 'suspended') {
+                return response()->json([
+                    'message' => 'Your institution account has been SUSPENDED due to policy violations or unpaid dues. Please contact the super administrator to resolve this issue.',
+                    'account_status' => 'suspended',
+                    'school_status' => 'suspended',
+                    'support_contact' => 'support@edumall.com'
+                ], 403);
+            } elseif ($admin->school->status === 'inactive') {
+                return response()->json([
+                    'message' => 'Your institution account is currently INACTIVE. Please contact the super administrator to reactivate your account.',
+                    'account_status' => 'inactive',
+                    'school_status' => 'inactive',
+                    'support_contact' => 'support@edumall.com'
+                ], 403);
+            }
         }
 
         // Find active access code for this school
@@ -475,7 +522,31 @@ class AuthController extends Controller
 
     /**
      * ============================
-     * GET ALL USERS (ADMIN)
+     * GET ALL USERS TABLE (ADMIN VIEW)
+     * ============================
+     */
+    public function getAllUsersTable(Request $request)
+    {
+        $user = $request->user();
+
+        // Check if user is admin
+        if (!$user || !$user->is_school_admin) {
+            return redirect()->back()->with('error', 'Unauthorized. Only school administrators can view all users.');
+        }
+
+        session(['title' => 'All Users']);
+
+        // Get all users with their schools
+        $users = User::with(['school', 'role'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return view('admin.users', compact('users'));
+    }
+
+    /**
+     * ============================
+     * GET ALL USERS (ADMIN API)
      * ============================
      */
     public function getAllUsers(Request $request)
@@ -656,4 +727,3 @@ class AuthController extends Controller
         ]);
     }
 }
-

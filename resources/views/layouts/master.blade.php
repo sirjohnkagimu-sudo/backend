@@ -36,6 +36,9 @@
     <!-- Animate css -->
     <link href="../../assets/css/animated.css" rel="stylesheet" />
 
+    <!-- SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
+
     <!--Sidemenu css -->
     <link id="theme" href="../../assets/css/sidemenu.css" rel="stylesheet">
 
@@ -112,6 +115,18 @@
                                 <polyline points="2 12 12 17 22 12"></polyline>
                             </svg>
                             <span class="side-menu__label">Products</span></a>
+                    </li>
+                    <li class="slide">
+                        <a class="side-menu__item" href="{{route('schools.all')}}">
+                            <svg class="side-menu__icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <span class="side-menu__label">Schools</span></a>
                     </li>
                     <li class="slide">
                         <a class="side-menu__item" href="{{route('users.index')}}">
@@ -275,7 +290,7 @@
             <div class="container">
                 <div class="row align-items-center flex-row-reverse">
                     <div class="col-md-12 col-sm-12 mt-3 mt-lg-0 text-center">
-                        Copyright © 2025 <a href="#">{{config('app.name')}}</a>. Designed by <a href="#">Sir JayP</a>
+                        Copyright © 2026 <a href="#">{{config('app.name')}}</a>. Designed by <a href="#">Sir JayP</a>
                         All rights reserved.
                     </div>
                 </div>
@@ -409,6 +424,9 @@
     <!-- Accordion js-->
     <script src="../../assets/plugins/accordion/accordion.min.js"></script>
     <script src="../../assets/js/accordion.js"></script>
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 
 </html>

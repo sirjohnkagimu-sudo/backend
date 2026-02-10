@@ -39,16 +39,26 @@ class LoginController extends Controller
     }
 
     /**
+     * Get the guard to be used during authentication.
+     *
+     * @return \Illuminate\Contracts\Auth\StatefulGuard
+     */
+    protected function guard()
+    {
+        return auth()->guard('web');
+    }
+
+    /**
      * Get the post login redirect path.
      *
      * @return string
      */
     protected function redirectTo()
     {
-        if (auth()->user()->accountType === 'institution') {
+        $user = auth()->user();
+        if ($user && $user->accountType === 'institution') {
             return '/inventory';
         }
-
         return '/dashboard';
     }
 }

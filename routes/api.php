@@ -87,6 +87,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Admin routes for school management
     Route::apiResource('schools', SchoolController::class)->only(['index', 'store', 'update']);
+    Route::get('/schools/{school}/details', [SchoolController::class, 'getSchoolDetails']);
+    Route::post('/schools/{school}/deactivate', [SchoolController::class, 'deactivate']);
+    Route::post('/schools/{school}/activate', [SchoolController::class, 'activate']);
+    Route::post('/schools/{school}/suspend', [SchoolController::class, 'suspend']);
+    Route::post('/schools/{school}/suspended', [SchoolController::class, 'suspend']);
+    Route::get('/schools-list', [SchoolController::class, 'index']);
     Route::get('/school', [SchoolController::class, 'show']); // Single school for current tenant
     Route::put('/school/update', [SchoolController::class, 'updateSchool']);
 
@@ -201,3 +207,18 @@ Route::prefix('labs')->group(function () {
 });
 
 Route::get('/computer-labs', [ComputerLabController::class, 'getComputerLab'])->name('api.computer_lab');
+
+// Admin school management routes (accessible from backend dashboard)
+Route::middleware(['auth'])->group(function () {
+    Route::apiResource('schools', SchoolController::class)->only(['index', 'store', 'update']);
+    Route::get('/schools/{school}/details', [SchoolController::class, 'getSchoolDetails']);
+    Route::post('/schools/{school}/deactivate', [SchoolController::class, 'deactivate']);
+    Route::post('/schools/{school}/inactive', [SchoolController::class, 'deactivate']);
+    Route::post('/schools/{school}/activate', [SchoolController::class, 'activate']);
+    Route::post('/schools/{school}/active', [SchoolController::class, 'activate']);
+    Route::post('/schools/{school}/suspend', [SchoolController::class, 'suspend']);
+    Route::post('/schools/{school}/suspended', [SchoolController::class, 'suspend']);
+    Route::get('/schools-list', [SchoolController::class, 'index']);
+    Route::get('/school', [SchoolController::class, 'show']);
+    Route::put('/school/update', [SchoolController::class, 'updateSchool']);
+});

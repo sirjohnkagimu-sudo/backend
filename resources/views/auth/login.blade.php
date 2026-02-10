@@ -103,15 +103,5 @@
 
 <script src="{{ asset('assets/js/vendors/jquery-3.5.1.min.js') }}"></script>
 <script src="{{ asset('assets/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-<script>
-            fetch('/submit', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ /* ... */ })
-        });
-</script>
 </body>
 </html>

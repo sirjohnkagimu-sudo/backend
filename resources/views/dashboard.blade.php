@@ -7,6 +7,13 @@
     <div class="page-leftheader">
         <h4 class="page-title">{{session('title')}}</h4>
     </div>
+    <div class="page-rightheader">
+        <div class="btn-list">
+            <a href="{{ route('schools.all') }}" class="btn btn-primary">
+                <i class="fa fa-school"></i> Manage Schools
+            </a>
+        </div>
+    </div>
 </div>
 <!--End Page header-->
 
@@ -81,12 +88,15 @@
     </div>
 </div>
 
-<!-- 🔽 NEW ROW FOR FULL-WIDTH TABLE -->
+<!-- 🔽 NEW ROW FOR FULL-WIDTH SCHOOLS MANAGEMENT TABLE -->
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="card-title">Schools Management</h3>
+                <a href="{{ route('schools.all') }}" class="btn btn-sm btn-primary">
+                    <i class="fa fa-external-link-alt"></i> View All Schools
+                </a>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -99,15 +109,16 @@
                                 <th>Admin Name</th>
                                 <th>Admin Email</th>
                                 <th>Status</th>
+                                <th>Users</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($schools as $school)
-                            <tr>
-                                <td>{{ $school->name }}</td>
+                            <tr data-id="{{ $school->id }}">
+                                <td><strong>{{ $school->name }}</strong></td>
                                 <td>{{ $school->centre_number }}</td>
-                                <td>{{ $school->district }}</td>
+                                <td>{{ $school->district ?? 'N/A' }}</td>
                                 <td>{{ $school->admin_name }}</td>
                                 <td>{{ $school->admin_email }}</td>
                                 <td>
@@ -116,9 +127,23 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-success">Activate</button>
-                                    <button class="btn btn-sm btn-warning">Deactivate</button>
-                                    <button class="btn btn-sm btn-danger">Suspend</button>
+                                    <span class="badge badge-info">{{ $school->users_count ?? 0 }}</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ route('schools.details', $school->id) }}" class="btn btn-sm btn-info" title="View Full Details">
+                                            <i class="fa fa-eye"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-success" onclick="updateStatus('{{ $school->id }}', 'active')" {{ $school->status === 'active' ? 'disabled' : '' }} title="Activate">
+                                            <i class="fa fa-check"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-warning" onclick="updateStatus('{{ $school->id }}', 'inactive')" {{ $school->status === 'inactive' ? 'disabled' : '' }} title="Deactivate">
+                                            <i class="fa fa-pause"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="updateStatus('{{ $school->id }}', 'suspended')" {{ $school->status === 'suspended' ? 'disabled' : '' }} title="Suspend">
+                                            <i class="fa fa-ban"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             @endforeach
@@ -132,25 +157,100 @@
 
 
 <script>
+// Update school status with beautiful popup
 function updateStatus(schoolId, status) {
-    $.ajax({
-        url: '/schools/' + schoolId,
-        type: 'PUT',
-        data: { status: status, _token: '{{ csrf_token() }}' },
-        success: function(response) {
-            // Update the row
-            var row = $('tr[data-id="' + schoolId + '"]');
-            var statusCell = row.find('td:nth-child(6)');
-            statusCell.html(getStatusBadge(status));
+    // Determine icon and color based on action
+    let title = '';
+    let text = '';
+    let icon = '';
+    let confirmButtonText = '';
+    let confirmButtonColor = '';
 
-            // Update buttons
-            row.find('button').prop('disabled', false);
-            if (status === 'active') row.find('.btn-success').prop('disabled', true);
-            else if (status === 'inactive') row.find('.btn-warning').prop('disabled', true);
-            else if (status === 'suspended') row.find('.btn-danger').prop('disabled', true);
-        },
-        error: function(xhr) {
-            alert('Error updating status: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Unknown error'));
+    if (status === 'active') {
+        title = 'Activate School?';
+        text = 'This will activate the school account and all its users. They will be able to log in and access the system.';
+        icon = 'question';
+        confirmButtonText = 'Yes, Activate!';
+        confirmButtonColor = '#28a745';
+    } else if (status === 'inactive') {
+        title = 'Deactivate School?';
+        text = 'This will deactivate the school account and all its users. They will not be able to log in until reactivated.';
+        icon = 'warning';
+        confirmButtonText = 'Yes, Deactivate!';
+        confirmButtonColor = '#ffc107';
+        text += '\n\nThis action can be undone later.';
+    } else if (status === 'suspended') {
+        title = 'Suspend School?';
+        text = '⚠️ This will immediately suspend the school account and all its users. This is usually done for policy violations or unpaid dues.';
+        icon = 'danger';
+        confirmButtonText = 'Yes, Suspend!';
+        confirmButtonColor = '#dc3545';
+    }
+
+    Swal.fire({
+        title: title,
+        text: text,
+        icon: icon,
+        showCancelButton: true,
+        confirmButtonText: confirmButtonText,
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: confirmButtonColor,
+        cancelButtonColor: '#6c757d',
+        reverseButtons: true,
+        customClass: {
+            confirmButton: 'btn btn-lg mr-2',
+            cancelButton: 'btn btn-lg'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show loading state
+            Swal.fire({
+                title: 'Processing...',
+                text: 'Updating school status...',
+                icon: 'info',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            $.ajax({
+                url: '/schools/' + schoolId + '/' + status,
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    status: status
+                },
+                success: function(response) {
+                    // Show success animation
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: response.message,
+                        timer: 3000,
+                        showConfirmButton: true,
+                        confirmButtonColor: '#28a745',
+                        customClass: {
+                            confirmButton: 'btn btn-success btn-lg'
+                        }
+                    }).then(() => {
+                        location.reload();
+                    });
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: xhr.responseJSON?.message || 'An error occurred while updating status',
+                        confirmButtonColor: '#dc3545',
+                        customClass: {
+                            confirmButton: 'btn btn-danger btn-lg'
+                        }
+                    });
+                }
+            });
         }
     });
 }
@@ -162,37 +262,38 @@ function getStatusBadge(status) {
     return '<span class="badge badge-secondary">' + status + '</span>';
 }
 
-// Realtime polling every 5 seconds
+// Auto-refresh every 30 seconds
 setInterval(function() {
     $.ajax({
-        url: '/schools',
+        url: '/api/schools',
         type: 'GET',
         success: function(response) {
-            // Update the table with new data
             var tbody = $('#schools-table tbody');
             tbody.empty();
             var schools = response.schools || [];
             schools.forEach(function(school) {
                 var row = '<tr data-id="' + school.id + '">' +
-                    '<td>' + school.name + '</td>' +
+                    '<td><strong>' + school.name + '</strong></td>' +
                     '<td>' + school.centre_number + '</td>' +
                     '<td>' + (school.district || 'N/A') + '</td>' +
-                    '<td>' + school.admin_name + '</td>' +
-                    '<td>' + school.admin_email + '</td>' +
+                    '<td>' + (school.admin_name || 'N/A') + '</td>' +
+                    '<td>' + (school.admin_email || 'N/A') + '</td>' +
                     '<td>' + getStatusBadge(school.status) + '</td>' +
+                    '<td><span class="badge badge-info">' + (school.users_count || 0) + '</span></td>' +
                     '<td>' +
-                        '<button class="btn btn-sm btn-success" onclick="updateStatus(' + school.id + ', \'active\')" ' + (school.status === 'active' ? 'disabled' : '') + '>Activate</button> ' +
-                        '<button class="btn btn-sm btn-warning" onclick="updateStatus(' + school.id + ', \'inactive\')" ' + (school.status === 'inactive' ? 'disabled' : '') + '>Deactivate</button> ' +
-                        '<button class="btn btn-sm btn-danger" onclick="updateStatus(' + school.id + ', \'suspended\')" ' + (school.status === 'suspended' ? 'disabled' : '') + '>Suspend</button>' +
+                        '<div class="btn-group">' +
+                            '<a href="/schools/' + school.id + '" class="btn btn-sm btn-info"><i class="fa fa-eye"></i></a> ' +
+                            '<button class="btn btn-sm btn-success" onclick="updateStatus(\'' + school.id + '\', \'active\')" ' + (school.status === 'active' ? 'disabled' : '') + '><i class="fa fa-check"></i></button> ' +
+                            '<button class="btn btn-sm btn-warning" onclick="updateStatus(\'' + school.id + '\', \'inactive\')" ' + (school.status === 'inactive' ? 'disabled' : '') + '><i class="fa fa-pause"></i></button> ' +
+                            '<button class="btn btn-sm btn-danger" onclick="updateStatus(\'' + school.id + '\', \'suspended\')" ' + (school.status === 'suspended' ? 'disabled' : '') + '><i class="fa fa-ban"></i></button>' +
+                        '</div>' +
                     '</td>' +
                     '</tr>';
                 tbody.append(row);
             });
         }
     });
-}, 5000);
+}, 30000);
 </script>
-
-</div>
 
 @endsection
