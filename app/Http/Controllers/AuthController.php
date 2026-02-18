@@ -553,11 +553,17 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        if (!$user || !$user->is_school_admin) {
+        // Allow if user is school admin OR has role_id = 1 (admin role)
+        if (!$user || (!$user->is_school_admin && $user->role_id != 1)) {
             return response()->json(['message' => 'Unauthorized. Only school administrators can view all users.'], 403);
         }
 
-        $users = User::with('school')->get();
+        // If filtering by tenant_id, return only users for that tenant
+        if ($request->has('tenant_id')) {
+            $users = User::where('tenant_id', $request->tenant_id)->with('school')->get();
+        } else {
+            $users = User::with('school')->get();
+        }
 
         return response()->json(['users' => $users]);
     }

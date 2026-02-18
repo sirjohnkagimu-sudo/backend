@@ -488,4 +488,174 @@ class PantryController extends Controller
 
         return response()->json($locations);
     }
+
+    // ==================== PANTRY ITEMS CRUD (Similar to Laboratory Items) ====================
+
+    /**
+     * Get all pantry items
+     */
+    public function itemsIndex(): JsonResponse
+    {
+        $items = Item::with(['category', 'supplier', 'location'])
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->where('department', 'pantry')
+            ->get();
+
+        return response()->json($items);
+    }
+
+    /**
+     * Store a new pantry item
+     */
+    public function itemsStore(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'category_id' => 'nullable|integer',
+            'category' => 'nullable|string|max:255',
+            'supplier_id' => 'nullable|integer',
+            'location_id' => 'nullable|integer',
+            'quantity' => 'required|integer|min:0',
+            'min_quantity' => 'required|integer|min:0',
+            'max_quantity' => 'nullable|integer|min:0',
+            'expiry_date' => 'nullable|date',
+            'unit' => 'nullable|string|max:50',
+            'unit_cost' => 'nullable|numeric|min:0',
+            'total_value' => 'nullable|numeric|min:0',
+        ]);
+
+        $validated['tenant_id'] = $user->tenant_id;
+        $validated['created_by'] = $user->id;
+        $validated['department'] = 'pantry';
+
+        $item = Item::create($validated);
+
+        return response()->json($item->load(['category', 'supplier', 'location']), 201);
+    }
+
+    /**
+     * Get a specific pantry item
+     */
+    public function itemsShow(Item $pantryItem): JsonResponse
+    {
+        if ($pantryItem->tenant_id !== auth()->user()->tenant_id || $pantryItem->department !== 'pantry') {
+            abort(403, 'Unauthorized access to this item');
+        }
+
+        return response()->json($pantryItem->load(['category', 'supplier', 'location']));
+    }
+
+    /**
+     * Update a pantry item
+     */
+    public function itemsUpdate(Request $request, Item $pantryItem): JsonResponse
+    {
+        if ($pantryItem->tenant_id !== auth()->user()->tenant_id || $pantryItem->department !== 'pantry') {
+            abort(403, 'Unauthorized access to this item');
+        }
+
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'category_id' => 'nullable|integer',
+            'category' => 'nullable|string|max:255',
+            'supplier_id' => 'nullable|integer',
+            'location_id' => 'nullable|integer',
+            'quantity' => 'sometimes|required|integer|min:0',
+            'min_quantity' => 'sometimes|required|integer|min:0',
+            'max_quantity' => 'nullable|integer|min:0',
+            'expiry_date' => 'nullable|date',
+            'unit' => 'nullable|string|max:50',
+            'unit_cost' => 'nullable|numeric|min:0',
+            'total_value' => 'nullable|numeric|min:0',
+        ]);
+
+        $pantryItem->update($validated);
+
+        return response()->json($pantryItem->load(['category', 'supplier', 'location']));
+    }
+
+    /**
+     * Delete a pantry item
+     */
+    public function itemsDestroy(Item $pantryItem): JsonResponse
+    {
+        if ($pantryItem->tenant_id !== auth()->user()->tenant_id || $pantryItem->department !== 'pantry') {
+            abort(403, 'Unauthorized access to this item');
+        }
+
+        $pantryItem->delete();
+
+        return response()->json(['message' => 'Pantry item deleted successfully']);
+    }
+
+    /**
+     * Bulk import pantry items
+     */
+    public function itemsBulkImport(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'items' => 'required|array',
+            'items.*.name' => 'required|string|max:255',
+            'items.*.category_id' => 'nullable|integer',
+            'items.*.category' => 'nullable|string|max:255',
+            'items.*.supplier_id' => 'nullable|integer',
+            'items.*.location_id' => 'nullable|integer',
+            'items.*.quantity' => 'required|integer|min:0',
+            'items.*.min_quantity' => 'nullable|integer|min:0',
+            'items.*.max_quantity' => 'nullable|integer|min:0',
+            'items.*.expiry_date' => 'nullable|date',
+            'items.*.unit' => 'nullable|string|max:50',
+            'items.*.unit_cost' => 'nullable|numeric|min:0',
+            'items.*.total_value' => 'nullable|numeric|min:0',
+            'items.*.notes' => 'nullable|string',
+        ]);
+
+        $items = $validated['items'];
+        $created = [];
+
+        foreach ($items as $itemData) {
+            $itemData['tenant_id'] = $user->tenant_id;
+            $itemData['created_by'] = $user->id;
+            $itemData['department'] = 'pantry';
+            $created[] = Item::create($itemData);
+        }
+
+        return response()->json([
+            'message' => 'Successfully imported ' . count($created) . ' pantry items',
+            'count' => count($created),
+            'items' => $created,
+        ], 201);
+    }
+
+    /**
+     * Get pantry items by location
+     */
+    public function itemsGetByLocation($locationId): JsonResponse
+    {
+        $items = Item::where('location_id', $locationId)
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->where('department', 'pantry')
+            ->with(['category', 'supplier', 'location'])
+            ->get();
+
+        return response()->json($items);
+    }
+
+    /**
+     * Get low stock pantry items
+     */
+    public function itemsLowStock(): JsonResponse
+    {
+        $items = Item::whereColumn('quantity', '<=', 'min_quantity')
+            ->where('tenant_id', auth()->user()->tenant_id)
+            ->where('department', 'pantry')
+            ->with(['category', 'supplier', 'location'])
+            ->get();
+
+        return response()->json($items);
+    }
 }

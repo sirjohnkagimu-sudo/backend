@@ -19,10 +19,12 @@ class Library extends Model
         'color',
         'brand',
         'in_stock',
+        'min_quantity',
         'condition',
         'price',
         'discount',
         'desc',
+        'location_id',
     ];
 
     protected $casts = [
@@ -33,7 +35,7 @@ class Library extends Model
     ];
     protected $appends = ['images_array', 'avatar_url', 'images_url'];
 
-    
+
     public function getImagesArrayAttribute()
     {
         return json_decode($this->images, true);
@@ -46,6 +48,14 @@ class Library extends Model
     {
         return array_map(function ($image) {
             return url('storage/' . $image);
-        }, $this->images);
+        }, $this->images ?? []);
+    }
+
+    /**
+     * Get the location that the library item belongs to
+     */
+    public function location()
+    {
+        return $this->belongsTo(Location::class);
     }
 }

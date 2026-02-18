@@ -279,7 +279,7 @@ setInterval(function() {
                     '<td>' + (school.admin_name || 'N/A') + '</td>' +
                     '<td>' + (school.admin_email || 'N/A') + '</td>' +
                     '<td>' + getStatusBadge(school.status) + '</td>' +
-                    '<td><span class="badge badge-info">' + (school.users_count || 0) + '</span></td>' +
+                    '<td><span class="badge badge-info">' + (school.users_count) + '</span></td>' +
                     '<td>' +
                         '<div class="btn-group">' +
                             '<a href="/schools/' + school.id + '" class="btn btn-sm btn-info"><i class="fa fa-eye"></i></a> ' +

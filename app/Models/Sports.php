@@ -18,10 +18,12 @@ class Sports extends Model
         'color',
         'brand',
         'in_stock',
+        'min_quantity',
         'condition',
         'price',
         'discount',
-        'desc'
+        'desc',
+        'location_id',
     ];
 
     protected $casts = [

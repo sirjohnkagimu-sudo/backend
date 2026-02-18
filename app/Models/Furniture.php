@@ -20,10 +20,12 @@ class Furniture extends Model
         'color',
         'brand',
         'in_stock',
+        'min_quantity',
         'condition',
         'price',
         'discount',
-        'desc'
+        'desc',
+        'location_id',
     ];
 
     protected $casts = [
@@ -45,10 +47,18 @@ class Furniture extends Model
     {
         return array_map(function ($image) {
             return url('storage/' . $image);
-        }, $this->images);
+        }, $this->images ?? []);
     }
     public function getAvatarUrlAttribute()
     {
         return url('storage/' . $this->avatar);
+    }
+
+    /**
+     * Get the location that the furniture item belongs to
+     */
+    public function location()
+    {
+        return $this->belongsTo(Location::class);
     }
 }

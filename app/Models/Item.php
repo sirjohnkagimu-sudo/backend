@@ -22,6 +22,7 @@ class Item extends Model
         'unit',
         'unit_cost',
         'total_value',
+        'department',
     ];
 
     public function category() {

@@ -26,9 +26,10 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title">All Users ({{ $users->total() }})</h5>
+                <h5 class="card-title">All Users ({{ isset($users) ? $users->total() : 0 }})</h5>
             </div>
             <div class="card-body">
+                @if(isset($users) && $users->count() > 0)
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped" id="users-table">
                         <thead>
@@ -75,7 +76,7 @@
                                 </td>
                                 <td>{{ $user->last_login ? (is_string($user->last_login) ? $user->last_login : $user->last_login->format('Y-m-d H:i')) : 'Never' }}</td>
                                 <td>
-                                    @if($user->is_active ?? true)
+                                    @if(isset($user->is_active) ? $user->is_active : true)
                                         <span class="badge badge-success">Active</span>
                                     @else
                                         <span class="badge badge-danger">Inactive</span>
@@ -94,8 +95,13 @@
 
                 <!-- Pagination -->
                 <div class="mt-3">
-                    {{ $users->links() }}
+                    {{ isset($users) ? $users->links() : '' }}
                 </div>
+                @else
+                <div class="alert alert-info">
+                    <strong>No users found.</strong> There are no users in the system yet.
+                </div>
+                @endif
             </div>
         </div>
     </div>

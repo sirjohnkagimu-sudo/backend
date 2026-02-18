@@ -8,7 +8,7 @@
         <h4 class="page-title">{{session('title')}}</h4>
     </div>
     <div class="page-rightheader ml-auto d-lg-flex d-none">
-        <a class="btn btn-success" href="{{ route('create.labs') }}"> Add Library product</a>
+        <a class="btn btn-success" href="{{ route('create.libraries') }}"> Add Library product</a>
 
     </div>
 </div>

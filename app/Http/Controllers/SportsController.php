@@ -162,14 +162,16 @@ class SportsController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'category' => 'required|in:jerseys,board_games,indoor_games,balls',
+            'category' => 'required|string|max:255',
             'color' => 'nullable|string|max:255',
             'brand' => 'nullable|string|max:255',
             'in_stock' => 'nullable|integer|min:0',
-            'condition' => 'required|in:new,old',
+            'min_quantity' => 'nullable|integer|min:0',
+            'condition' => 'nullable|string|max:255',
             'price' => 'required|numeric|min:0',
             'discount' => 'nullable|numeric|min:0',
             'desc' => 'nullable|string|max:1000',
+            'location_id' => 'nullable|integer',
         ]);
 
         $sports = new Sports();
@@ -188,14 +190,16 @@ class SportsController extends Controller
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
-            'category' => 'sometimes|in:jerseys,board_games,indoor_games,balls',
+            'category' => 'sometimes|string|max:255',
             'color' => 'nullable|string|max:255',
             'brand' => 'nullable|string|max:255',
             'in_stock' => 'nullable|integer|min:0',
-            'condition' => 'sometimes|in:new,old',
+            'min_quantity' => 'nullable|integer|min:0',
+            'condition' => 'sometimes|string|max:255',
             'price' => 'sometimes|numeric|min:0',
             'discount' => 'nullable|numeric|min:0',
             'desc' => 'nullable|string|max:1000',
+            'location_id' => 'nullable|integer',
         ]);
 
         $sports->update($validated);
@@ -225,6 +229,42 @@ class SportsController extends Controller
         $sports->delete();
 
         return response()->json(['message' => 'Sports item deleted successfully']);
+    }
+
+    /**
+     * Get sports calendar sessions
+     */
+    public function getCalendar(): JsonResponse
+    {
+        // Return empty array for now - can be extended to use a separate sessions table
+        return response()->json(['sessions' => []]);
+    }
+
+    /**
+     * Store sports calendar session
+     */
+    public function storeCalendar(Request $request): JsonResponse
+    {
+        // Return success for now - can be extended to save to sessions table
+        return response()->json(['message' => 'Session created', 'session' => []], 201);
+    }
+
+    /**
+     * Update sports calendar session
+     */
+    public function updateCalendar(Request $request, $id): JsonResponse
+    {
+        // Return success for now
+        return response()->json(['message' => 'Session updated']);
+    }
+
+    /**
+     * Delete sports calendar session
+     */
+    public function destroyCalendar($id): JsonResponse
+    {
+        // Return success for now
+        return response()->json(['message' => 'Session deleted']);
     }
 
     /**
