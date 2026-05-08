@@ -13,7 +13,8 @@ class StockMovementPolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        // All authenticated users can view stock movements
+        return true;
     }
 
     /**
@@ -21,7 +22,8 @@ class StockMovementPolicy
      */
     public function view(User $user, StockMovement $stockMovement): bool
     {
-        return false;
+        // All authenticated users can view individual stock movements
+        return true;
     }
 
     /**
@@ -29,7 +31,8 @@ class StockMovementPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        // All authenticated users can create stock movements
+        return true;
     }
 
     /**
@@ -37,7 +40,8 @@ class StockMovementPolicy
      */
     public function update(User $user, StockMovement $stockMovement): bool
     {
-        return false;
+        // All authenticated users can update stock movements
+        return true;
     }
 
     /**
@@ -45,7 +49,8 @@ class StockMovementPolicy
      */
     public function delete(User $user, StockMovement $stockMovement): bool
     {
-        return false;
+        // Only admins can delete stock movements
+        return $user->role_id === 1;
     }
 
     /**
@@ -53,7 +58,8 @@ class StockMovementPolicy
      */
     public function restore(User $user, StockMovement $stockMovement): bool
     {
-        return false;
+        // Only admins can restore stock movements
+        return $user->role_id === 1;
     }
 
     /**
@@ -61,6 +67,7 @@ class StockMovementPolicy
      */
     public function forceDelete(User $user, StockMovement $stockMovement): bool
     {
-        return false;
+        // Only admins can force delete stock movements
+        return $user->role_id === 1;
     }
 }

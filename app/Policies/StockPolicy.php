@@ -18,37 +18,32 @@ class StockPolicy
 
     public function view(User $user, Item $item)
     {
-        return in_array($user->role, [
-            'department_head',
-            'teacher',
-            'lab_agent'
-        ]);
+        // All authenticated users can view stock/items
+        return true;
     }
 
     public function stockIn(User $user)
     {
-        return $user->role === 'lab_agent';
+        // All authenticated users can stock in
+        return true;
     }
 
     public function stockOut(User $user)
     {
-        return in_array($user->role, [
-            'lab_agent',
-            'teacher'
-        ]);
+        // All authenticated users can stock out
+        return true;
     }
 
     public function adjust(User $user)
     {
-        return $user->role === 'lab_agent';
+        // All authenticated users can adjust stock
+        return true;
     }
 
     public function viewReports(User $user)
     {
-        return in_array($user->role, [
-            'admin',
-            'department_head'
-        ]);
+        // All authenticated users can view reports
+        return true;
     }
 }
 
