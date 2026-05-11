@@ -1,36 +1,75 @@
-<x-guest-layout>
-    <x-auth-card>
-        <x-slot name="logo">
-            <a href="/">
-                <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
-            </a>
-        </x-slot>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Password</title>
 
-        <div class="mb-4 text-sm text-gray-600">
-            {{ __('This is a secure area of the application. Please confirm your password before continuing.') }}
-        </div>
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
 
-        <!-- Validation Errors -->
-        <x-auth-validation-errors class="mb-4" :errors="$errors" />
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
 
-        <form method="POST" action="{{ route('password.confirm') }}">
-            @csrf
+            <div class="card shadow">
+                <div class="card-header text-center">
+                    <h3>Confirm Password</h3>
+                </div>
 
-            <!-- Password -->
-            <div>
-                <x-label for="password" :value="__('Password')" />
+                <div class="card-body">
 
-                <x-input id="password" class="block mt-1 w-full"
+                    <div class="mb-4 text-muted">
+                        This is a secure area of the application.
+                        Please confirm your password before continuing.
+                    </div>
+
+                    {{-- Validation Errors --}}
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ route('password.confirm') }}">
+                        @csrf
+
+                        {{-- Password --}}
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                Password
+                            </label>
+
+                            <input
+                                id="password"
                                 type="password"
                                 name="password"
-                                required autocomplete="current-password" />
+                                class="form-control"
+                                required
+                                autocomplete="current-password"
+                            >
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                Confirm
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
             </div>
 
-            <div class="flex justify-end mt-4">
-                <x-button>
-                    {{ __('Confirm') }}
-                </x-button>
-            </div>
-        </form>
-    </x-auth-card>
-</x-guest-layout>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

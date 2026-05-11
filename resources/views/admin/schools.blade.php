@@ -10,7 +10,7 @@
     </div>
     <div class="page-rightheader">
         <div class="btn-list">
-            <a href="{{ route('schools.all') }}" class="btn btn-primary">
+            <a href="{{ route('web.schools.all') }}" class="btn btn-primary">
                 <i class="fe fe-refresh-cw"></i> Refresh
             </a>
         </div>
@@ -140,7 +140,7 @@
                                 </td>
                                 <td>
                                     <div class="btn-group">
-                                        <a href="{{ route('schools.details', $school->id) }}" class="btn btn-sm btn-primary" title="View Full Details">
+                                        <a href="{{ route('web.schools.details', $school->id) }}" class="btn btn-sm btn-primary" title="View Full Details">
                                             <i class="fa fa-eye"></i>
                                         </a>
                                         <button type="button" class="btn btn-sm btn-success dropdown-toggle" data-toggle="dropdown">

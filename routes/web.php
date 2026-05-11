@@ -55,19 +55,45 @@
 
         Route::get('/users', [AuthController::class, 'getAllUsersTable'])->name('users.index');
 
-        // Schools management
-        Route::get('/schools', [SchoolController::class, 'index'])->name('schools.index');
-        Route::get('/schools/all', [SchoolController::class, 'allSchoolsView'])->name('schools.all');
-        Route::get('/schools/{school}', [SchoolController::class, 'schoolDetailsView'])->name('schools.details');
-        Route::put('/schools/{school}', [SchoolController::class, 'update'])->name('schools.update');
-        Route::post('/schools/{school}/deactivate', [SchoolController::class, 'deactivate'])->name('schools.deactivate');
-        Route::post('/schools/{school}/inactive', [SchoolController::class, 'deactivate'])->name('schools.inactive');
-        Route::post('/schools/{school}/activate', [SchoolController::class, 'activate'])->name('schools.activate');
-        Route::post('/schools/{school}/active', [SchoolController::class, 'activate'])->name('schools.active');
-        Route::post('/schools/{school}/suspend', [SchoolController::class, 'suspend'])->name('schools.suspend');
-        Route::post('/schools/{school}/suspended', [SchoolController::class, 'suspend'])->name('schools.suspended');
-        Route::post('/users/reset-password', [SchoolController::class, 'resetUserPassword'])->name('users.reset-password');
-        Route::post('/users/force-password-reset', [SchoolController::class, 'forcePasswordReset'])->name('users.force-password-reset');
+       // Schools management
+            Route::prefix('schools')->name('web.schools.')->group(function () {
+
+                Route::get('/', [SchoolController::class, 'index'])
+                    ->name('index');
+
+                Route::get('/all', [SchoolController::class, 'allSchoolsView'])
+                    ->name('all');
+
+                Route::get('/{school}', [SchoolController::class, 'schoolDetailsView'])
+                    ->name('details');
+
+                Route::put('/{school}', [SchoolController::class, 'update'])
+                    ->name('update');
+
+                Route::post('/{school}/deactivate', [SchoolController::class, 'deactivate'])
+                    ->name('deactivate');
+
+                Route::post('/{school}/inactive', [SchoolController::class, 'deactivate'])
+                    ->name('inactive');
+
+                Route::post('/{school}/activate', [SchoolController::class, 'activate'])
+                    ->name('activate');
+
+                Route::post('/{school}/active', [SchoolController::class, 'activate'])
+                    ->name('active');
+
+                Route::post('/{school}/suspend', [SchoolController::class, 'suspend'])
+                    ->name('suspend');
+
+                Route::post('/{school}/suspended', [SchoolController::class, 'suspend'])
+                    ->name('suspended');
+            });
+
+                Route::post('/users/reset-password', [SchoolController::class, 'resetUserPassword'])
+                    ->name('users.reset-password');
+
+                Route::post('/users/force-password-reset', [SchoolController::class, 'forcePasswordReset'])
+                    ->name('users.force-password-reset');
 
         Route::get('/holidays', [HolidayController::class, 'index'])->name('index.holidays');
         Route::get('/holidays/create', [HolidayController::class, 'create'])->name('create.holidays');

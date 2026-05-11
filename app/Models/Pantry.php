@@ -15,24 +15,25 @@ class Pantry extends Model
     protected $fillable = [
         'tenant_id',
         'name',
-        'type',
+        'category',
         'location',
-        'contact_person',
-        'contact_email',
-        'contact_phone',
-        'capacity',
-        'operating_hours_open',
-        'operating_hours_close',
-        'theme_color',
-        'logo',
+        'min_quantity',
+        'max_quantity',
+        'unit',
+        'unit_cost',
+        'supplier',
+        'supplier_email',
+        'supplier_phone',
+        'quantity',
+        'notes',
+        'expiry_date',
         'is_active',
     ];
 
     protected $casts = [
-        'operating_hours_open' => 'datetime:H:i',
-        'operating_hours_close' => 'datetime:H:i',
+        'expiry_date' => 'datetime:H:i',
         'is_active' => 'boolean',
-        'capacity' => 'integer',
+        'quantity' => 'integer',
     ];
 
     protected $hidden = [

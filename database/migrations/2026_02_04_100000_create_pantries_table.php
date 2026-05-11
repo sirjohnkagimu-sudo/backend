@@ -12,20 +12,22 @@ return new class extends Migration
             $table->id();
             $table->uuid('tenant_id')->index();
             $table->string('name');
-            $table->enum('type', ['main-kitchen', 'cafeteria', 'staff-room', 'hostel']);
+            $table->string('category')->nullable();
             $table->string('location')->nullable();
-            $table->string('contact_person')->nullable();
-            $table->string('contact_email')->nullable();
-            $table->string('contact_phone')->nullable();
-            $table->integer('capacity')->default(0);
-            $table->time('operating_hours_open')->nullable();
-            $table->time('operating_hours_close')->nullable();
-            $table->string('theme_color')->nullable();
-            $table->string('logo')->nullable();
+            $table->integer('min_quantity')->nullable();
+            $table->integer('max_quantity')->nullable();
+            $table->string('unit')->nullable();
+            $table->decimal('unit_cost', 12, 2)->nullable();
+            $table->string('supplier')->nullable();
+            $table->string('supplier_email')->nullable();
+            $table->string('supplier_phone')->nullable();
+            $table->integer('quantity')->default(0);
+            $table->string('notes')->nullable();
+            $table->date('expiry_date')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->index(['tenant_id', 'type']);
+            $table->index(['tenant_id', 'category']);
         });
     }
 

@@ -9,7 +9,7 @@
     </div>
     <div class="page-rightheader">
         <div class="btn-list">
-            <a href="{{ route('schools.all') }}" class="btn btn-primary">
+            <a href="{{ route('web.schools.all') }}" class="btn btn-primary">
                 <i class="fa fa-school"></i> Manage Schools
             </a>
         </div>
@@ -94,7 +94,7 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="card-title">Schools Management</h3>
-                <a href="{{ route('schools.all') }}" class="btn btn-sm btn-primary">
+                <a href="{{ route('web.schools.all') }}" class="btn btn-sm btn-primary">
                     <i class="fa fa-external-link-alt"></i> View All Schools
                 </a>
             </div>
@@ -131,7 +131,7 @@
                                 </td>
                                 <td>
                                     <div class="btn-group">
-                                        <a href="{{ route('schools.details', $school->id) }}" class="btn btn-sm btn-info" title="View Full Details">
+                                        <a href="{{ route('web.schools.details', $school->id) }}" class="btn btn-sm btn-info" title="View Full Details">
                                             <i class="fa fa-eye"></i>
                                         </a>
                                         <button class="btn btn-sm btn-success" onclick="updateStatus('{{ $school->id }}', 'active')" {{ $school->status === 'active' ? 'disabled' : '' }} title="Activate">

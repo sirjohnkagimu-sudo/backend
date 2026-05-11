@@ -117,7 +117,7 @@
                             <span class="side-menu__label">Products</span></a>
                     </li>
                     <li class="slide">
-                        <a class="side-menu__item" href="{{route('schools.all')}}">
+                        <a class="side-menu__item" href="{{route('web.schools.all')}}">
                             <svg class="side-menu__icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                 stroke-linecap="round" stroke-linejoin="round">

@@ -97,6 +97,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/pantry-items/bulk-import', [PantryController::class, 'itemsBulkImport']);
     Route::get('/pantry-items/location/{locationId}', [PantryController::class, 'itemsGetByLocation']);
     Route::get('/pantry-items/low-stock', [PantryController::class, 'itemsLowStock']);
+     Route::get('/pantry-storage-locations', [PantryController::class, 'storageLocations']);
+    Route::post('/pantry-storage-locations', [PantryController::class, 'storeStorageLocation']);
+    Route::put('/pantry-storage-locations/{Pantry}', [PantryController::class, 'updateStorageLocation']);
+    Route::delete('/pantry-storage-locations/{Pantry}', [PantryController::class, 'destroyStorageLocation']);
 
     // ==================== LIBRARY ROUTES ====================
     Route::get('/libraries', [LibraryController::class, 'apiIndex']);
@@ -126,7 +130,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/schools/{school}/activate', [SchoolController::class, 'activate']);
     Route::post('/schools/{school}/suspend', [SchoolController::class, 'suspend']);
     Route::post('/schools/{school}/suspended', [SchoolController::class, 'suspend']);
-    Route::get('/schools-list', [SchoolController::class, 'index']);
     Route::get('/school', [SchoolController::class, 'show']); // Single school for current tenant
     Route::put('/school/update', [SchoolController::class, 'updateSchool']);
 
@@ -366,17 +369,3 @@ Route::prefix('labs')->group(function () {
 
 Route::get('/computer-labs', [ComputerLabController::class, 'getComputerLab'])->name('api.computer_lab');
 
-// Admin school management routes (accessible from backend dashboard)
-Route::middleware(['auth'])->group(function () {
-    Route::apiResource('schools', SchoolController::class)->only(['index', 'store', 'update']);
-    Route::get('/schools/{school}/details', [SchoolController::class, 'getSchoolDetails']);
-    Route::post('/schools/{school}/deactivate', [SchoolController::class, 'deactivate']);
-    Route::post('/schools/{school}/inactive', [SchoolController::class, 'deactivate']);
-    Route::post('/schools/{school}/activate', [SchoolController::class, 'activate']);
-    Route::post('/schools/{school}/active', [SchoolController::class, 'activate']);
-    Route::post('/schools/{school}/suspend', [SchoolController::class, 'suspend']);
-    Route::post('/schools/{school}/suspended', [SchoolController::class, 'suspend']);
-    Route::get('/schools-list', [SchoolController::class, 'index']);
-    Route::get('/school', [SchoolController::class, 'show']);
-    Route::put('/school/update', [SchoolController::class, 'updateSchool']);
-});

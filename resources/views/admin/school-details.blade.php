@@ -5,7 +5,7 @@
 <!--Page header-->
 <div class="page-header">
     <div class="page-leftheader">
-        <a href="{{ route('schools.all') }}" class="btn btn-sm btn-secondary mr-2">
+        <a href="{{ route('web.schools.all') }}" class="btn btn-sm btn-secondary mr-2">
             <i class="fa fa-arrow-left"></i> Back to Schools
         </a>
         <h4 class="page-title">{{ $school->name }}</h4>
