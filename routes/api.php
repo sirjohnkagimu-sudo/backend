@@ -32,6 +32,7 @@ use App\Http\Controllers\AuditController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PantryController;
 use App\Http\Controllers\SickbayController;
+use App\Http\Controllers\UnitController;
 
 
 // Public login routes (no middleware)
@@ -86,7 +87,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('locations', LocationController::class);
     Route::apiResource('categories', CategoryController::class);
     Route::apiResource('transactions', TransactionController::class);
+    Route::apiResource('transaction-types', TransactionTypeController::class);
     Route::apiResource('stock-movements', StockMovementController::class);
+    Route::apiResource('units', UnitController::class);
 
     // ==================== PANTRY ITEMS ROUTES ====================
     Route::get('/pantry-items', [PantryController::class, 'itemsIndex']);

@@ -38,7 +38,7 @@ class TransactionController extends Controller
 
         $validated = $request->validate([
             'item_id' => 'required|exists:items,id',
-            'type' => 'required|in:purchase,use,disposal',
+            'type' => 'required|string|max:255',
             'quantity' => 'required|integer|min:1',
             'reason' => 'required|string',
             'approved_by' => 'required|string',
@@ -78,7 +78,7 @@ class TransactionController extends Controller
         }
 
         $validated = $request->validate([
-            'type' => 'sometimes|in:purchase,use,disposal',
+            'type' => 'sometimes|string|max:255',
             'quantity' => 'sometimes|integer|min:1',
             'reason' => 'sometimes|string',
             'approved_by' => 'sometimes|string',

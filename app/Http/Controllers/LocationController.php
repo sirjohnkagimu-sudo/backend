@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Location;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 
 class LocationController extends Controller
@@ -39,6 +40,14 @@ class LocationController extends Controller
             'capacity' => $request->capacity ?? 100,
         ]);
 
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id'   => $user->id,
+            'action'    => 'create',
+            'type'      => 'location',
+            'description' => 'Created storage location: ' . $location->name,
+        ]);
+
         return response()->json($location->loadCount('items'), 201);
     }
 
@@ -57,12 +66,22 @@ class LocationController extends Controller
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255|unique:locations,name,' . $location->id . ',id,tenant_id,' . $user->tenant_id,
-            'type' => 'sometimes|required|in:shelf,drawer,bench,cabinet',
+            'type' => 'sometimes|required|string|max:255',
             'labType' => 'sometimes|required|in:chemistry,physics,biology,agriculture',
             'capacity' => 'sometimes|required|integer|min:1',
         ]);
 
-        $location->update($validated);
+        $updates = array_intersect_key($validated, array_flip(['name', 'type', 'lab_type', 'capacity']));
+        $location->update($updates);
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id'   => $user->id,
+            'action'    => 'update',
+            'type'      => 'location',
+            'description' => 'Updated storage location: ' . $location->name,
+            'metadata'  => $updates,
+        ]);
 
         return response()->json($location->loadCount('items'));
     }
@@ -80,9 +99,17 @@ class LocationController extends Controller
             ], 422);
         }
 
+        $name = $location->name;
         $location->delete();
 
-        return response()->json(['message' => 'Location deleted']);
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id'   => $user->id,
+            'action'    => 'delete',
+            'type'      => 'location',
+            'description' => 'Deleted storage location: ' . $name,
+        ]);
 
+        return response()->json(['message' => 'Location deleted']);
     }
 }

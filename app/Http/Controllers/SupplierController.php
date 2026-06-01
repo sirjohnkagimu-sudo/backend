@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Supplier;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 
 class SupplierController extends Controller
@@ -46,6 +47,14 @@ class SupplierController extends Controller
             'is_active' => $request->isActive ?? true,
         ]);
 
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id'   => $user->id,
+            'action'    => 'create',
+            'type'      => 'supplier',
+            'description' => 'Added supplier: ' . $supplier->name,
+        ]);
+
         return response()->json($supplier, 201);
     }
 
@@ -76,7 +85,26 @@ class SupplierController extends Controller
             'isActive' => 'nullable|boolean',
         ]);
 
+        $original = $supplier->getOriginal();
         $supplier->update($request->only(['name', 'phone', 'email', 'website', 'address', 'contact_person', 'is_active']));
+        $diff = [];
+        foreach (array_keys($request->only(['name', 'phone', 'email', 'website', 'address', 'contact_person', 'is_active'])) as $field) {
+            $diff[] = [
+                'field' => $field,
+                'old_value' => $original[$field] ?? null,
+                'new_value' => $supplier->$field,
+            ];
+        }
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id'   => $user->id,
+            'action'    => 'update',
+            'type'      => 'supplier',
+            'description' => 'Updated supplier: ' . $supplier->name,
+            'metadata'  => ['fields' => array_keys($diff), 'diff' => $diff],
+        ]);
+
         return response()->json($supplier);
     }
 
@@ -87,7 +115,17 @@ class SupplierController extends Controller
             return response()->json(['error' => 'Unauthorized. Only school administrators can manage suppliers.'], 403);
         }
 
+        $name = $supplier->name;
         $supplier->delete();
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id'   => $user->id,
+            'action'    => 'delete',
+            'type'      => 'supplier',
+            'description' => 'Deleted supplier: ' . $name,
+        ]);
+
         return response()->json(['message' => 'Supplier deleted']);
     }
 }

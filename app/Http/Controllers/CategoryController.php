@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
@@ -42,6 +43,14 @@ class CategoryController extends Controller
             'name' => $request->name,
         ]);
 
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id'   => $user->id,
+            'action'    => 'create',
+            'type'      => 'category',
+            'description' => 'Created category: ' . $category->name,
+        ]);
+
         return response()->json($category, 201);
     }
 
@@ -66,7 +75,20 @@ class CategoryController extends Controller
             'name' => 'required|string|unique:categories,name,' . $category->id . ',id,tenant_id,' . $user->tenant_id,
         ]);
 
+        $original = $category->getOriginal();
         $category->update($request->only(['name']));
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id'   => $user->id,
+            'action'    => 'update',
+            'type'      => 'category',
+            'description' => 'Updated category: ' . $category->name,
+            'metadata'  => [
+                ['field' => 'name', 'old_value' => $original['name'] ?? null, 'new_value' => $category->name],
+            ],
+        ]);
+
         return response()->json($category);
     }
 
@@ -77,7 +99,17 @@ class CategoryController extends Controller
             return response()->json(['error' => 'Unauthorized. Only school administrators can manage categories.'], 403);
         }
 
+        $name = $category->name;
         $category->delete();
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id'   => $user->id,
+            'action'    => 'delete',
+            'type'      => 'category',
+            'description' => 'Deleted category: ' . $name,
+        ]);
+
         return response()->json(['message' => 'Category deleted']);
     }
 }

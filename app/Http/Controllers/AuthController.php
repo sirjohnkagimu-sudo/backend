@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\School;
 use App\Models\LabAccessCode;
+use App\Models\ActivityLog;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -354,6 +355,14 @@ class AuthController extends Controller
             'is_school_admin' => false,
         ]);
 
+        ActivityLog::create([
+            'tenant_id' => $currentUser->tenant_id,
+            'user_id'   => $currentUser->id,
+            'action'    => 'create',
+            'type'      => 'user',
+            'description' => 'Created user: ' . ($newUser->firstName ?? '') . ' ' . ($newUser->lastName ?? ''),
+        ]);
+
         return response()->json([
             'message' => 'User created successfully',
             'user'    => $newUser->load('role'),
@@ -382,6 +391,15 @@ class AuthController extends Controller
         ]);
 
         $user->update($request->only(['firstName', 'lastName', 'email', 'role_id', 'department']));
+        $name = ($user->firstName ?? '') . ' ' . ($user->lastName ?? '');
+
+        ActivityLog::create([
+            'tenant_id' => $currentUser->tenant_id,
+            'user_id'   => $currentUser->id,
+            'action'    => 'update',
+            'type'      => 'user',
+            'description' => 'Updated user: ' . trim($name),
+        ]);
 
         return response()->json([
             'message' => 'User updated successfully',
@@ -407,7 +425,16 @@ class AuthController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $name = ($user->firstName ?? '') . ' ' . ($user->lastName ?? '');
         $user->delete();
+
+        ActivityLog::create([
+            'tenant_id' => $currentUser->tenant_id,
+            'user_id'   => $currentUser->id,
+            'action'    => 'delete',
+            'type'      => 'user',
+            'description' => 'Deleted user: ' . trim($name),
+        ]);
 
         return response()->json(['message' => 'User deleted successfully']);
     }

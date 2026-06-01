@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\Notification;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 
 class ItemController extends Controller
@@ -42,12 +43,21 @@ class ItemController extends Controller
         $validated['tenant_id'] = $user->tenant_id;
         $validated['created_by'] = $user->id;
 
-        return Item::create($validated);
+        $item = Item::create($validated);
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id' => $user->id,
+            'action' => 'create',
+            'type' => 'item',
+            'description' => 'Created new item: ' . $item->name,
+        ]);
+
+        return $item->load(['category', 'supplier', 'location']);
     }
 
     public function show(Item $item)
     {
-        // Ensure the item belongs to the authenticated user's tenant
         if ($item->tenant_id !== auth()->user()->tenant_id) {
             abort(403, 'Unauthorized access to this item');
         }
@@ -57,6 +67,8 @@ class ItemController extends Controller
 
     public function update(Request $request, Item $item)
     {
+        $user = $request->user();
+
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'category_id' => 'nullable|integer',
@@ -73,24 +85,52 @@ class ItemController extends Controller
         ]);
 
         $oldQuantity = $item->quantity;
+        $original = $item->getOriginal();
         $item->update($validated);
+        $changedFields = array_keys($item->getChanges() ?? []);
+        $diff = [];
+        foreach ($changedFields as $field) {
+            $diff[] = [
+                'field' => $field,
+                'old_value' => $original[$field] ?? null,
+                'new_value' => $item->$field,
+            ];
+        }
 
-        // Check if quantity went below minimum
         if (isset($validated['quantity']) && $validated['quantity'] <= $item->min_quantity && $oldQuantity > $item->min_quantity) {
             $this->createLowStockNotification($item);
         }
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id' => $user->id,
+            'action' => 'update',
+            'type' => 'item',
+            'description' => 'Updated item: ' . $item->name,
+            'metadata' => ['fields' => $changedFields, 'diff' => $diff],
+        ]);
 
         return $item->load(['category', 'supplier', 'location']);
     }
 
     public function destroy(Item $item)
     {
-        // Ensure the item belongs to the authenticated user's tenant
-        if ($item->tenant_id !== auth()->user()->tenant_id) {
+        $user = request()->user();
+
+        if ($item->tenant_id !== $user->tenant_id) {
             abort(403, 'Unauthorized access to this item');
         }
 
+        $name = $item->name;
         $item->delete();
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id' => $user->id,
+            'action' => 'delete',
+            'type' => 'item',
+            'description' => 'Deleted item: ' . $name,
+        ]);
 
         return response()->json(['message' => 'Item deleted']);
     }
@@ -111,9 +151,6 @@ class ItemController extends Controller
             ->get();
     }
 
-    /**
-     * Bulk import items from Excel
-     */
     public function bulkImport(Request $request)
     {
         $user = $request->user();
@@ -144,6 +181,14 @@ class ItemController extends Controller
             $created[] = Item::create($itemData);
         }
 
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id' => $user->id,
+            'action' => 'create',
+            'type' => 'item',
+            'description' => 'Bulk imported ' . count($created) . ' items',
+        ]);
+
         return response()->json([
             'message' => 'Successfully imported ' . count($created) . ' items',
             'count' => count($created),
@@ -151,12 +196,8 @@ class ItemController extends Controller
         ], 201);
     }
 
-    /**
-     * Create a low stock notification
-     */
     private function createLowStockNotification(Item $item)
     {
-        // Check if notification already exists for this item
         $existing = Notification::where('type', 'low_stock')
             ->where('related_item', $item->name)
             ->where('is_ignored', false)
@@ -164,7 +205,7 @@ class ItemController extends Controller
 
         if (!$existing) {
             Notification::create([
-                'user_id' => null, // Site-wide notification
+                'user_id' => null,
                 'type' => 'low_stock',
                 'title' => 'Low Stock Alert',
                 'message' => "{$item->name} - Only {$item->quantity} items left in stock",
@@ -177,4 +218,6 @@ class ItemController extends Controller
             ]);
         }
     }
+}
+
 }
