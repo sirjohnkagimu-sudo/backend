@@ -27,6 +27,7 @@ class ItemController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:255',
             'category_id' => 'nullable|integer',
             'category' => 'nullable|string|max:255',
             'supplier_id' => 'nullable|integer',
@@ -71,6 +72,7 @@ class ItemController extends Controller
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
+            'code' => 'nullable|string|max:255',
             'category_id' => 'nullable|integer',
             'category' => 'nullable|string|max:255',
             'supplier_id' => 'nullable|integer',

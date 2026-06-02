@@ -12,6 +12,7 @@ class Item extends Model
         'tenant_id',
         'created_by',
         'name',
+        'code',
         'category_id',
         'supplier_id',
         'location_id',
