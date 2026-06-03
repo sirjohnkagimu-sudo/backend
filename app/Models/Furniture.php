@@ -14,6 +14,7 @@ class Furniture extends Model
     protected $table = 'furniture';
     protected $fillable = [
         'name',
+        'code',
         'category',
         'avatar',
         'images',

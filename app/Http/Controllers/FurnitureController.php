@@ -169,6 +169,7 @@ class FurnitureController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:255',
             'category' => 'required|string|max:255',
             'color' => 'nullable|string|max:255',
             'brand' => 'nullable|string|max:255',
@@ -204,6 +205,7 @@ class FurnitureController extends Controller
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
+            'code' => 'nullable|string|max:255',
             'category' => 'sometimes|string|max:255',
             'color' => 'nullable|string|max:255',
             'brand' => 'nullable|string|max:255',

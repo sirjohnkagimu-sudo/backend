@@ -12,6 +12,7 @@ class Sports extends Model
     protected $table = 'sports';
     protected $fillable = [
         'name',
+        'code',
         'category',
         'avatar',
         'images',

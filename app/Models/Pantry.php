@@ -15,6 +15,7 @@ class Pantry extends Model
     protected $fillable = [
         'tenant_id',
         'name',
+        'code',
         'category',
         'location',
         'min_quantity',

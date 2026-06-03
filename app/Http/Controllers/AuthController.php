@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\School;
 use App\Models\LabAccessCode;
+use App\Models\DepartmentAccessCode;
 use App\Models\ActivityLog;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
@@ -201,8 +202,8 @@ class AuthController extends Controller
             }
         }
 
-        // Find active access code for this school
-        $accessCode = LabAccessCode::where('school_id', $admin->tenant_id)
+        // Find active access code for this school across all departments
+        $accessCode = DepartmentAccessCode::where('school_id', $admin->tenant_id)
             ->where('access_code', $request->access_code)
             ->active()
             ->first();
@@ -516,8 +517,8 @@ class AuthController extends Controller
             ->orderBy('last_login', 'desc')
             ->get();
 
-        // Include lab access codes as pseudo-users
-        $accessCodes = LabAccessCode::where('school_id', $user->tenant_id)
+        // Include department access codes as pseudo-users
+        $accessCodes = DepartmentAccessCode::where('school_id', $user->tenant_id)
             ->orderBy('last_used_at', 'desc')
             ->get();
 
