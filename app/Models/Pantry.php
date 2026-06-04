@@ -66,6 +66,11 @@ class Pantry extends Model
         return $this->hasMany(MealPlan::class, 'tenant_id', 'tenant_id');
     }
 
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     // Get full logo URL
     public function getLogoUrlAttribute()
     {

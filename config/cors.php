@@ -25,7 +25,6 @@ return [
     'allowed_origins' => [
         'https://edumallug.com',
         'https://www.edumallug.com',
-        'https://edumall-uganda.netlify.app',
         'https://edumall-ug.netlify.app',
         'http://localhost:5173',
         'http://localhost:4173',

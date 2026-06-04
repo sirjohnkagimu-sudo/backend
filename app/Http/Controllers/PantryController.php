@@ -6,6 +6,8 @@ use App\Models\Pantry;
 use App\Models\PantrySession;
 use App\Models\MealPlan;
 use App\Models\Transaction;
+use App\Models\ActivityLog;
+use App\Models\Location;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -98,9 +100,11 @@ class PantryController extends Controller
     {
         $query = PantrySession::where('tenant_id', auth()->user()->tenant_id);
 
-        if ($request->date) $query->where('date', $request->date);
-        if ($request->status) $query->where('status', $request->status);
-        if ($request->type) $query->where('type', $request->type);
+        if ($request->filled('date')) $query->where('date', $request->date);
+        if ($request->filled('status')) $query->where('status', $request->status);
+        if ($request->filled('type')) $query->where('type', $request->type);
+        if ($request->filled('start_date')) $query->where('date', '>=', $request->start_date);
+        if ($request->filled('end_date')) $query->where('date', '<=', $request->end_date);
 
         return response()->json($query->orderBy('date')->get());
     }
@@ -125,10 +129,23 @@ class PantryController extends Controller
         $validated['tenant_id'] = auth()->user()->tenant_id;
         $validated['status'] = 'planned';
 
-        return response()->json(
-            PantrySession::create($validated),
-            201
-        );
+        $session = PantrySession::create($validated);
+
+        ActivityLog::create([
+            'tenant_id' => auth()->user()->tenant_id,
+            'user_id' => auth()->id(),
+            'action' => 'created pantry session',
+            'type' => 'pantry_session_create',
+            'description' => 'Created pantry session: ' . $session->title . ' on ' . $session->date,
+            'metadata' => [
+                'pantry_session_id' => $session->id,
+                'session_title' => $session->title,
+                'session_date' => $session->date,
+                'department' => 'Pantry',
+            ],
+        ]);
+
+        return response()->json($session, 201);
     }
 
     public function updateSession(Request $request, PantrySession $session): JsonResponse
@@ -136,12 +153,41 @@ class PantryController extends Controller
         $this->authorizeTenant($session);
         $session->update($request->all());
 
+        ActivityLog::create([
+            'tenant_id' => auth()->user()->tenant_id,
+            'user_id' => auth()->id(),
+            'action' => 'updated pantry session',
+            'type' => 'pantry_session_update',
+            'description' => 'Updated pantry session: ' . $session->title . ' on ' . $session->date,
+            'metadata' => [
+                'pantry_session_id' => $session->id,
+                'session_title' => $session->title,
+                'session_date' => $session->date,
+                'department' => 'Pantry',
+            ],
+        ]);
+
         return response()->json($session);
     }
 
     public function destroySession(PantrySession $session): JsonResponse
     {
         $this->authorizeTenant($session);
+
+        ActivityLog::create([
+            'tenant_id' => auth()->user()->tenant_id,
+            'user_id' => auth()->id(),
+            'action' => 'deleted pantry session',
+            'type' => 'pantry_session_delete',
+            'description' => 'Deleted pantry session: ' . $session->title . ' on ' . $session->date,
+            'metadata' => [
+                'pantry_session_id' => $session->id,
+                'session_title' => $session->title,
+                'session_date' => $session->date,
+                'department' => 'Pantry',
+            ],
+        ]);
+
         $session->delete();
 
         return response()->json(['message' => 'Session deleted']);
@@ -259,13 +305,131 @@ class PantryController extends Controller
         
         $pantryItem->update($validated);
 
+        ActivityLog::create([
+            'tenant_id' => auth()->user()->tenant_id,
+            'user_id' => auth()->id(),
+            'action' => 'updated pantry item',
+            'type' => 'pantry_item_update',
+            'description' => 'Updated pantry item: ' . $pantryItem->name,
+            'metadata' => [
+                'pantry_item_id' => $pantryItem->id,
+                'pantry_item_name' => $pantryItem->name,
+                'department' => 'Pantry',
+            ],
+        ]);
+
         return response()->json($pantryItem);
     }
 
     public function itemsDestroy(Pantry $pantryItem): JsonResponse
     {
         $this->authorizeTenant($pantryItem);
+
+        ActivityLog::create([
+            'tenant_id' => auth()->user()->tenant_id,
+            'user_id' => auth()->id(),
+            'action' => 'deleted pantry item',
+            'type' => 'pantry_item_delete',
+            'description' => 'Deleted pantry item: ' . $pantryItem->name,
+            'metadata' => [
+                'pantry_item_id' => $pantryItem->id,
+                'pantry_item_name' => $pantryItem->name,
+                'department' => 'Pantry',
+            ],
+        ]);
+
         $pantryItem->delete();
+
+        return response()->json(['message' => 'Deleted']);
+    }
+
+    public function reports(Request $request): JsonResponse
+    {
+        $tenantId = auth()->user()->tenant_id;
+
+        $items = Pantry::where('tenant_id', $tenantId)->get();
+
+        $totalItems = $items->count();
+        $lowStockItems = $items->filter(fn ($item) => $item->quantity <= $item->min_quantity)->values();
+        $totalValue = (float) $items->sum(fn ($item) => ($item->quantity ?? 0) * ($item->unit_cost ?? 0));
+        $overStockedItems = $items->filter(fn ($item) => $item->max_quantity && ($item->quantity ?? 0) > $item->max_quantity)->values();
+
+        $topConsumedItems = $items->map(fn ($item) => [
+            'name' => $item->name,
+            'quantity' => $item->quantity ?? 0,
+            'cost' => ($item->quantity ?? 0) * ($item->unit_cost ?? 0),
+        ])
+            ->sortByDesc('quantity')
+            ->take(5)
+            ->values();
+
+        return response()->json([
+            'totalMealsServed' => 0,
+            'totalPaxServed' => 0,
+            'totalItemsConsumed' => (int) $items->sum('quantity'),
+            'totalItemsPurchased' => 0,
+            'totalWastage' => 0,
+            'totalCost' => $totalValue,
+            'avgCostPerPax' => 0,
+            'topConsumedItems' => $topConsumedItems,
+            'lowStockItems' => $lowStockItems->map(fn ($item) => [
+                'name' => $item->name,
+                'current' => $item->quantity ?? 0,
+                'minThreshold' => $item->min_quantity ?? 0,
+            ])->values(),
+        ]);
+    }
+
+    public function storageLocations(Request $request): JsonResponse
+    {
+        $tenantId = auth()->user()->tenant_id;
+
+        return response()->json(
+            Location::where('tenant_id', $tenantId)
+                ->where(function ($query) {
+                    $query->where('type', 'pantry')
+                        ->orWhereNull('type');
+                })
+                ->orderBy('name')
+                ->get()
+        );
+    }
+
+    public function storeStorageLocation(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $validated['tenant_id'] = auth()->user()->tenant_id;
+        $validated['type'] = $validated['type'] ?? 'pantry';
+        $validated['department'] = $validated['department'] ?? 'pantry';
+
+        return response()->json(Location::create($validated), 201);
+    }
+
+    public function updateStorageLocation(Request $request, Location $storageLocation): JsonResponse
+    {
+        if ($storageLocation->tenant_id !== auth()->user()->tenant_id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+        ]);
+
+        $storageLocation->update($validated);
+
+        return response()->json($storageLocation);
+    }
+
+    public function destroyStorageLocation(Location $storageLocation): JsonResponse
+    {
+        if ($storageLocation->tenant_id !== auth()->user()->tenant_id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $storageLocation->delete();
 
         return response()->json(['message' => 'Deleted']);
     }
