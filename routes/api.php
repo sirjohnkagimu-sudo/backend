@@ -20,6 +20,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\TeacherPasscodeController;
 use App\Http\Controllers\LabAccessCodeController;
 use App\Http\Controllers\DepartmentAccessCodeController;
+use App\Http\Controllers\StoreController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SupplierController;
@@ -87,6 +88,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('suppliers', SupplierController::class);
     Route::apiResource('locations', LocationController::class);
     Route::apiResource('categories', CategoryController::class);
+    Route::apiResource('conditions', ConditionController::class);
     Route::apiResource('transactions', TransactionController::class);
     Route::apiResource('transaction-types', TransactionTypeController::class);
     Route::apiResource('stock-movements', StockMovementController::class);
@@ -194,6 +196,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         // Transactions - must come BEFORE the /{pantry} route
         Route::get('/transactions', [PantryController::class, 'transactions']);
+        Route::post('/transactions', [PantryController::class, 'storeTransaction']);
 
         // Reports - must come BEFORE the /{pantry} route
         Route::get('/reports', [PantryController::class, 'reports']);
@@ -209,6 +212,20 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{pantry}', [PantryController::class, 'show']);
         Route::put('/{pantry}', [PantryController::class, 'update']);
         Route::delete('/{pantry}', [PantryController::class, 'destroy']);
+    });
+
+    // ==================== STORE ROUTES ====================
+    Route::prefix('store')->group(function () {
+        Route::get('/', [StoreController::class, 'index']);
+        Route::get('/categories', [StoreController::class, 'categories']);
+        Route::get('/transactions', [StoreController::class, 'transactions']);
+        Route::post('/transactions', [StoreController::class, 'storeTransaction']);
+        Route::get('/reports', [StoreController::class, 'reports']);
+        Route::get('/audit', [StoreController::class, 'audit']);
+        Route::get('/{id}', [StoreController::class, 'show']);
+        Route::post('/', [StoreController::class, 'store']);
+        Route::put('/{id}', [StoreController::class, 'update']);
+        Route::delete('/{id}', [StoreController::class, 'destroy']);
     });
 
     // ==================== FURNITURE ROUTES ====================

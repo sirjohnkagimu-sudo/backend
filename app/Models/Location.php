@@ -15,7 +15,9 @@ class Location extends Model
         'name',
         'type',
         'lab_type',
+        'store_type',
         'capacity',
+        'department',
     ];
 
     protected $appends = ['current_usage'];

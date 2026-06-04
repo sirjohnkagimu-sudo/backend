@@ -253,6 +253,28 @@ class PantryController extends Controller
         ]);
     }
 
+    public function storeTransaction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'item_id' => 'required|exists:pantries,id',
+            'type' => 'required|string|max:255',
+            'quantity' => 'required|integer|min:1',
+            'reason' => 'required|string',
+            'approved_by' => 'nullable|string',
+            'created_by' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'cost' => 'nullable|numeric|min:0',
+            'meal_served' => 'nullable|string',
+            'number_served' => 'nullable|integer',
+        ]);
+
+        $validated['tenant_id'] = auth()->user()->tenant_id;
+
+        $transaction = Transaction::create($validated);
+
+        return response()->json($transaction->load('item'), 201);
+    }
+
     public function itemsStore(Request $request): JsonResponse
     {
         $validated = $request->validate([

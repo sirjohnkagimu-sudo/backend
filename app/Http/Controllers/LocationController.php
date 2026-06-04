@@ -13,8 +13,16 @@ class LocationController extends Controller
         $user = $request->user();
         $query = Location::withCount('items as current_usage')->where('tenant_id', $user->tenant_id);
 
+        if ($request->filled('department')) {
+            $query->where('department', $request->department);
+        }
+
         if ($request->filled('labType')) {
             $query->where('lab_type', $request->labType);
+        }
+
+        if ($request->filled('storeType')) {
+            $query->where('store_type', $request->storeType);
         }
 
         return response()->json($query->orderBy('name')->get());
@@ -37,7 +45,9 @@ class LocationController extends Controller
             'name' => $data['name'],
             'type' => $request->type ?? 'shelf',
             'lab_type' => $request->labType ?? 'chemistry',
+            'store_type' => $request->storeType ?? null,
             'capacity' => $request->capacity ?? 100,
+            'department' => $request->department ?? 'store',
         ]);
 
         ActivityLog::create([
@@ -68,10 +78,12 @@ class LocationController extends Controller
             'name' => 'sometimes|required|string|max:255|unique:locations,name,' . $location->id . ',id,tenant_id,' . $user->tenant_id,
             'type' => 'sometimes|required|string|max:255',
             'labType' => 'sometimes|required|in:chemistry,physics,biology,agriculture',
+            'storeType' => 'sometimes|required|string|max:255',
+            'department' => 'sometimes|required|string|max:255',
             'capacity' => 'sometimes|required|integer|min:1',
         ]);
 
-        $updates = array_intersect_key($validated, array_flip(['name', 'type', 'lab_type', 'capacity']));
+        $updates = array_intersect_key($validated, array_flip(['name', 'type', 'lab_type', 'store_type', 'department', 'capacity']));
         $location->update($updates);
 
         ActivityLog::create([

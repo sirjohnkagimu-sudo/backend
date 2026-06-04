@@ -105,91 +105,61 @@ class AuditController extends Controller
             }
         }
 
-        if ($department === 'laboratory') {
-            $items = Item::where('tenant_id', $tenantId)
-                ->with(['supplier', 'location', 'creator'])
-                ->orderBy('updated_at', 'desc')
-                ->get();
-
-            foreach ($items as $item) {
-                if ($item->created_at == $item->updated_at) {
-                    $actorId = (string) ($item->created_by ?? '');
-                    if ($this->shouldSkip($filterUserId, $startDate, $endDate, $item->created_at, $actorId)) {
-                        continue;
-                    }
-
-                    $auditEntries[] = [
-                        'id' => 'ic_' . $item->id . '_create',
-                        'type' => 'item_change',
-                        'action' => 'create',
-                        'description' => 'Created new item: ' . $item->name,
-                        'user' => [
-                            'id' => $item->created_by ?: $user->id,
-                            'name' => $item->creator->name ?? ($user->firstName . ' ' . $user->lastName),
-                            'email' => $item->creator->email ?? $user->email,
-                        ],
-                        'entity' => [
-                            'id' => $item->id,
-                            'name' => $item->name,
-                            'type' => 'Item',
-                        ],
-                        'timestamp' => $item->created_at,
-                    ];
-                }
-            }
-
-            $labSessions = LabSession::where('tenant_id', $tenantId)
-                ->with('creator')
+        if ($department === 'store' || $department === 'furniture') {
+            $activityLogs = ActivityLog::where('tenant_id', $tenantId)
+                ->where(function ($query) {
+                    $query->where('type', 'like', 'store_%')
+                        ->orWhere('type', 'like', 'furniture_%');
+                })
+                ->with('user')
                 ->orderBy('created_at', 'desc')
                 ->get();
-
-            foreach ($labSessions as $session) {
-                $actorId = (string) ($session->created_by ?? '');
-                if ($this->shouldSkip($filterUserId, $startDate, $endDate, $session->created_at, $actorId)) {
-                    continue;
-                }
-
-                $auditEntries[] = [
-                    'id' => 'ls_' . $session->id,
-                    'type' => 'lab_session',
-                    'action' => 'create',
-                    'description' => 'Created lab session: ' . $session->title,
-                    'user' => [
-                        'id' => $session->created_by,
-                        'name' => $session->creator->name ?? ($user->firstName . ' ' . $user->lastName),
-                        'email' => $session->creator->email ?? $user->email,
-                    ],
-                    'entity' => [
-                        'id' => $session->id,
-                        'name' => $session->title,
-                        'type' => 'Lab Session',
-                    ],
-                    'timestamp' => $session->created_at,
-                ];
-            }
-        }
-
-        $activityLogs = ActivityLog::where('tenant_id', $tenantId)
-            ->where(function ($query) use ($department) {
-                if ($department === 'pantry') {
-                    $query->where('type', 'pantry_item_create')
-                        ->orWhere('type', 'pantry_item_update')
-                        ->orWhere('type', 'pantry_item_delete')
-                        ->orWhere('type', 'pantry_session_create')
-                        ->orWhere('type', 'pantry_session_update')
-                        ->orWhere('type', 'pantry_session_delete');
-                } elseif ($department === 'laboratory') {
+        } elseif ($department === 'laboratory') {
+            $activityLogs = ActivityLog::where('tenant_id', $tenantId)
+                ->where(function ($query) {
                     $query->where('type', '!=', 'pantry_item_create')
                         ->where('type', '!=', 'pantry_item_update')
                         ->where('type', '!=', 'pantry_item_delete')
                         ->where('type', '!=', 'pantry_session_create')
                         ->where('type', '!=', 'pantry_session_update')
-                        ->where('type', '!=', 'pantry_session_delete');
-                }
-            })
-            ->with('user')
-            ->orderBy('created_at', 'desc')
-            ->get();
+                        ->where('type', '!=', 'pantry_session_delete')
+                        ->where('type', 'not like', 'store_%')
+                        ->where('type', 'not like', 'furniture_%');
+                })
+                ->with('user')
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } else {
+            $activityLogs = ActivityLog::where('tenant_id', $tenantId)
+                ->with('user')
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+
+        foreach ($activityLogs as $log) {
+            $actorId = (string) ($log->user_id ?? '');
+            if ($this->shouldSkip($filterUserId, $startDate, $endDate, $log->created_at, $actorId)) {
+                continue;
+            }
+
+            $auditEntries[] = [
+                'id' => 'al_' . $log->id,
+                'type' => $log->type,
+                'action' => $log->action,
+                'description' => $log->description,
+                'user' => [
+                    'id' => $log->user_id,
+                    'name' => $log->user->name ?? ($user->firstName . ' ' . $user->lastName),
+                    'email' => $log->user->email ?? $user->email,
+                ],
+                'entity' => [
+                    'id' => $log->id,
+                    'name' => $log->description,
+                    'type' => ucfirst($log->type),
+                ],
+                'timestamp' => $log->created_at,
+            ];
+        }
 
         foreach ($activityLogs as $log) {
             $actorId = (string) ($log->user_id ?? '');

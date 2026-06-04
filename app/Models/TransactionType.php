@@ -11,6 +11,7 @@ class TransactionType extends Model
 
     protected $fillable = [
         'tenant_id',
+        'department',
         'name',
         'color',
         'icon',
