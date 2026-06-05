@@ -10,11 +10,12 @@ return new class extends Migration
     {
         Schema::create('conditions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained('schools')->cascadeOnDelete();
+            $table->uuid('tenant_id');
             $table->string('name');
             $table->timestamps();
 
             $table->unique(['tenant_id', 'name']);
+            $table->foreign('tenant_id')->references('id')->on('schools')->cascadeOnDelete();
         });
     }
 
