@@ -15,7 +15,6 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['tenant_id', 'name']);
-            $table->foreign('tenant_id')->references('id')->on('schools')->cascadeOnDelete();
         });
     }
 
