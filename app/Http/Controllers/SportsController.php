@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sports;
+use App\Models\Transaction;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class SportsController extends Controller
 {
@@ -36,7 +39,8 @@ class SportsController extends Controller
      */
     public function getSports(Request $request): JsonResponse
     {
-        $query = Sports::query();
+        $tenantId = auth()->user()->tenant_id;
+        $query = Sports::query()->where('tenant_id', $tenantId);
 
         // Filter by category
         if ($request->has('category') && $request->category !== 'all') {
@@ -103,7 +107,8 @@ class SportsController extends Controller
      */
     public function getCategories(): JsonResponse
     {
-        $categories = Sports::distinct()->pluck('category');
+        $tenantId = auth()->user()->tenant_id;
+        $categories = Sports::where('tenant_id', $tenantId)->distinct()->pluck('category');
         return response()->json($categories);
     }
 
@@ -175,11 +180,31 @@ class SportsController extends Controller
             'location_id' => 'nullable|integer',
         ]);
 
-        $sports = new Sports();
-        $sports->fill($validated);
+        $tenantId = auth()->user()->tenant_id;
+        $sports = new Sports($validated);
+        $sports->tenant_id = $tenantId;
         $sports->save();
 
-        return response()->json($sports, 201);
+        if (empty($sports->code)) {
+            $sports->code = 'SPO-' . $sports->id;
+            $sports->save();
+        }
+
+        return response()->json([
+            'id' => $sports->id,
+            'name' => $sports->name,
+            'code' => $sports->code,
+            'category' => $sports->category,
+            'in_stock' => $sports->in_stock,
+            'min_quantity' => $sports->min_quantity,
+            'condition' => $sports->condition,
+            'price' => $sports->price,
+            'discount' => $sports->discount,
+            'desc' => $sports->desc,
+            'location_id' => $sports->location_id,
+            'created_at' => $sports->created_at,
+            'updated_at' => $sports->updated_at,
+        ], 201);
     }
 
     /**
@@ -206,7 +231,20 @@ class SportsController extends Controller
 
         $sports->update($validated);
 
-        return response()->json($sports);
+        return response()->json([
+            'id' => $sports->id,
+            'name' => $sports->name,
+            'code' => $sports->code,
+            'category' => $sports->category,
+            'in_stock' => $sports->in_stock,
+            'min_quantity' => $sports->min_quantity,
+            'condition' => $sports->condition,
+            'price' => $sports->price,
+            'discount' => $sports->discount,
+            'desc' => $sports->desc,
+            'location_id' => $sports->location_id,
+            'updated_at' => $sports->updated_at,
+        ]);
     }
 
     /**
@@ -236,10 +274,25 @@ class SportsController extends Controller
     /**
      * Get sports calendar sessions
      */
-    public function getCalendar(): JsonResponse
+    public function getCalendar(Request $request): JsonResponse
     {
-        // Return empty array for now - can be extended to use a separate sessions table
-        return response()->json(['sessions' => []]);
+        $tenantId = auth()->user()->tenant_id;
+
+        $query = \App\Models\SportsSession::query()->where('tenant_id', $tenantId);
+
+        if ($request->filled('from') && $request->filled('to')) {
+            $query->whereBetween('date', [$request->from, $request->to]);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $sessions = $query->orderBy('date')->orderBy('start_time')->get();
+
+        return response()->json([
+            'sessions' => $sessions,
+        ]);
     }
 
     /**
@@ -247,8 +300,26 @@ class SportsController extends Controller
      */
     public function storeCalendar(Request $request): JsonResponse
     {
-        // Return success for now - can be extended to save to sessions table
-        return response()->json(['message' => 'Session created', 'session' => []], 201);
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'type' => 'required|string|max:255',
+            'sports_type' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'date' => 'required|date',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'instructor' => 'nullable|string|max:255',
+            'location' => 'nullable|string|max:255',
+            'status' => 'required|in:scheduled,ongoing,completed,cancelled',
+            'notes' => 'nullable|string|max:1000',
+            'required_items' => 'nullable|array',
+        ]);
+
+        $validated['tenant_id'] = auth()->user()->tenant_id;
+
+        $session = \App\Models\SportsSession::create($validated);
+
+        return response()->json(['message' => 'Session created', 'session' => $session], 201);
     }
 
     /**
@@ -256,8 +327,26 @@ class SportsController extends Controller
      */
     public function updateCalendar(Request $request, $id): JsonResponse
     {
-        // Return success for now
-        return response()->json(['message' => 'Session updated']);
+        $session = \App\Models\SportsSession::findOrFail($id);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'type' => 'required|string|max:255',
+            'sports_type' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'date' => 'required|date',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'instructor' => 'nullable|string|max:255',
+            'location' => 'nullable|string|max:255',
+            'status' => 'required|in:scheduled,ongoing,completed,cancelled',
+            'notes' => 'nullable|string|max:1000',
+            'required_items' => 'nullable|array',
+        ]);
+
+        $session->update($validated);
+
+        return response()->json(['message' => 'Session updated', 'session' => $session]);
     }
 
     /**
@@ -265,8 +354,164 @@ class SportsController extends Controller
      */
     public function destroyCalendar($id): JsonResponse
     {
-        // Return success for now
+        $session = \App\Models\SportsSession::findOrFail($id);
+        $session->delete();
+
         return response()->json(['message' => 'Session deleted']);
+    }
+
+    /**
+     * Get sports transactions for the current tenant
+     */
+    public function transactions(Request $request): JsonResponse
+    {
+        $tenantId = auth()->user()->tenant_id;
+
+        $query = Transaction::query()->where('tenant_id', $tenantId);
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        $query->orderBy('created_at', 'desc');
+
+        $perPage = $request->get('per_page', 20);
+        $transactions = $query->paginate($perPage);
+
+        return response()->json([
+            'data' => $transactions->items(),
+            'meta' => [
+                'current_page' => $transactions->currentPage(),
+                'last_page' => $transactions->lastPage(),
+                'per_page' => $transactions->perPage(),
+                'total' => $transactions->total(),
+            ]
+        ]);
+    }
+
+    /**
+     * Store a new sports transaction
+     */
+    public function storeTransaction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'item_id' => 'required|integer',
+            'type' => 'required|string|max:255',
+            'quantity' => 'required|integer|min:1',
+            'reason' => 'nullable|string|max:1000',
+            'notes' => 'nullable|string|max:1000',
+            'cost' => 'nullable|numeric|min:0',
+        ]);
+
+        $validated['tenant_id'] = auth()->user()->tenant_id;
+        $validated['created_by'] = auth()->user()->id;
+
+        $transaction = Transaction::create($validated);
+
+        ActivityLog::create([
+            'tenant_id' => $validated['tenant_id'],
+            'user_id' => auth()->user()->id,
+            'action' => 'create',
+            'type' => 'sports_transaction',
+            'description' => ucfirst($transaction->type) . ' ' . $transaction->quantity . ' sports items',
+        ]);
+
+        return response()->json($transaction, 201);
+    }
+
+    /**
+     * Get sports reports data
+     */
+    public function reports(): JsonResponse
+    {
+        $tenantId = auth()->user()->tenant_id;
+
+        $totalItems = Sports::where('tenant_id', $tenantId)->count();
+        $totalValue = Sports::where('tenant_id', $tenantId)->sum(DB::raw('COALESCE(price, 0) * COALESCE(in_stock, 0)'));
+        $lowStockItems = Sports::where('tenant_id', $tenantId)
+            ->whereColumn('in_stock', '<=', 'min_quantity')
+            ->count();
+
+        $itemsByCategory = Sports::where('tenant_id', $tenantId)
+            ->select('category', DB::raw('COUNT(*) as count'))
+            ->groupBy('category')
+            ->get();
+
+        $itemsByCondition = Sports::where('tenant_id', $tenantId)
+            ->select('condition', DB::raw('COUNT(*) as count'))
+            ->groupBy('condition')
+            ->get();
+
+        return response()->json([
+            'totalItems' => $totalItems,
+            'totalValue' => $totalValue,
+            'lowStockItems' => $lowStockItems,
+            'itemsByCategory' => $itemsByCategory,
+            'itemsByCondition' => $itemsByCondition,
+        ]);
+    }
+
+    /**
+     * Get sports audit log
+     */
+    public function audit(Request $request): JsonResponse
+    {
+        $tenantId = auth()->user()->tenant_id;
+
+        $query = ActivityLog::where('tenant_id', $tenantId)
+            ->where(function ($q) {
+                $q->where('type', 'like', 'sports_%')
+                    ->orWhere('type', 'like', 'sport_%');
+            })
+            ->with(['user:id,name,email,role,username'])
+            ->orderBy('created_at', 'desc');
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        $perPage = $request->get('per_page', 50);
+        $logs = $query->paginate($perPage);
+
+        return response()->json([
+            'data' => $logs->items(),
+            'meta' => [
+                'current_page' => $logs->currentPage(),
+                'last_page' => $logs->lastPage(),
+                'per_page' => $logs->perPage(),
+                'total' => $logs->total(),
+            ]
+        ]);
+    }
+
+    /**
+     * Get sports users for filter dropdown
+     */
+    public function users(Request $request): JsonResponse
+    {
+        $tenantId = auth()->user()->tenant_id;
+
+        $userIds = ActivityLog::where('tenant_id', $tenantId)
+            ->where(function ($q) {
+                $q->where('type', 'like', 'sports_%')
+                    ->orWhere('type', 'like', 'sport_%');
+            })
+            ->distinct()
+            ->pluck('user_id')
+            ->take(200)
+            ->toArray();
+
+        if (empty($userIds)) {
+            return response()->json([]);
+        }
+
+        $users = \App\Models\User::whereIn('id', $userIds)
+            ->select('id', 'email', 'role')
+            ->orderBy('email')
+            ->limit(200)
+            ->get();
+
+        return response()->json($users);
     }
 
     /**

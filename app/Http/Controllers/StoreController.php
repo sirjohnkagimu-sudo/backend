@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\StoreItem;
 use App\Models\Transaction;
 use App\Models\ActivityLog;
+use App\Models\Category;
+use App\Models\Condition;
+use App\Models\Location;
+use App\Models\Supplier;
+use App\Models\StoreSession;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -20,7 +25,7 @@ class StoreController extends Controller
     public function index(Request $request): JsonResponse
     {
         $tenantId = auth()->user()->tenant_id;
-        $query = StoreItem::query()->where('tenant_id', $tenantId);
+        $query = StoreItem::where('tenant_id', $tenantId)->with(['location', 'supplier']);
 
         if ($request->filled('category') && $request->category !== 'all') {
             $query->where('category', $request->category);
@@ -89,6 +94,7 @@ class StoreController extends Controller
             'discount' => 'nullable|numeric|min:0',
             'desc' => 'nullable|string',
             'location_id' => 'nullable|integer',
+            'supplier_id' => 'nullable|integer|exists:suppliers,id',
         ]);
 
         $validated['tenant_id'] = auth()->user()->tenant_id;
@@ -252,7 +258,327 @@ class StoreController extends Controller
         ]);
     }
 
-    // ==================== AUDIT ====================
+    // ==================== STORE CATEGORIES ====================
+
+    public function categories(Request $request): JsonResponse
+    {
+        $tenantId = auth()->user()->tenant_id;
+        $categories = \App\Models\Category::where('tenant_id', $tenantId)->get();
+        return response()->json($categories);
+    }
+
+    public function storeCategory(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user || $user->role_id !== 1) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $name = trim((string) $request->input('name', ''));
+
+        if ($name === '') {
+            return response()->json(['error' => 'Category name is required.'], 422);
+        }
+
+        $exists = \App\Models\Category::where('tenant_id', $user->tenant_id)
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+            ->exists();
+
+        if ($exists) {
+            return response()->json(['error' => 'Category already exists.'], 422);
+        }
+
+        $category = \App\Models\Category::create([
+            'tenant_id' => $user->tenant_id,
+            'name' => $name,
+        ]);
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id' => $user->id,
+            'action' => 'create',
+            'type' => 'category',
+            'description' => 'Created category: ' . $category->name,
+        ]);
+
+        return response()->json($category, 201);
+    }
+
+    // ==================== STORE CONDITIONS ====================
+
+    public function conditions(Request $request): JsonResponse
+    {
+        $tenantId = auth()->user()->tenant_id;
+        $conditions = \App\Models\Condition::where('tenant_id', $tenantId)->get();
+        return response()->json($conditions);
+    }
+
+    public function storeCondition(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user || $user->role_id !== 1) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $name = trim((string) $request->input('name', ''));
+
+        if ($name === '') {
+            return response()->json(['error' => 'Condition name is required.'], 422);
+        }
+
+        try {
+            \DB::statement("SET SESSION sql_mode='NO_ENGINE_SUBSTITUTION'");
+
+            $exists = \App\Models\Condition::where('tenant_id', $user->tenant_id)
+                ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+                ->exists();
+
+            if ($exists) {
+                return response()->json(['error' => 'Condition already exists.'], 422);
+            }
+
+            $condition = \App\Models\Condition::create([
+                'tenant_id' => $user->tenant_id,
+                'name' => $name,
+            ]);
+
+            ActivityLog::create([
+                'tenant_id' => $user->tenant_id,
+                'user_id' => $user->id,
+                'action' => 'create',
+                'type' => 'condition',
+                'description' => 'Created condition: ' . $condition->name,
+            ]);
+
+            return response()->json($condition, 201);
+        } catch (\Throwable $e) {
+            \Log::error('Failed to create condition', [
+                'tenant_id' => $user->tenant_id,
+                'name' => $name,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to create condition.',
+                'detail' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    // ==================== STORE LOCATIONS ====================
+
+    public function locations(Request $request): JsonResponse
+    {
+        $tenantId = auth()->user()->tenant_id;
+        $locations = \App\Models\Location::where('tenant_id', $tenantId)
+            ->where('department', 'store')
+            ->get();
+        return response()->json($locations);
+    }
+
+    public function storeLocation(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user || $user->role_id !== 1) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'nullable|string|max:255',
+            'storeType' => 'nullable|string|max:255',
+            'capacity' => 'nullable|integer|min:1',
+            'description' => 'nullable|string',
+            'address' => 'nullable|string',
+        ]);
+
+        $location = \App\Models\Location::create([
+            'tenant_id' => $user->tenant_id,
+            'created_by' => $user->id,
+            'name' => $request->name,
+            'type' => $request->type ?? 'warehouse',
+            'store_type' => $request->storeType ?? 'office',
+            'capacity' => $request->capacity ?? 100,
+            'department' => 'store',
+            'description' => $request->description,
+            'address' => $request->address,
+        ]);
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id' => $user->id,
+            'action' => 'create',
+            'type' => 'location',
+            'description' => 'Created store location: ' . $location->name,
+        ]);
+
+        return response()->json($location->loadCount('items'), 201);
+    }
+
+    public function updateLocation(Request $request, $id): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user || $user->role_id !== 1) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $location = \App\Models\Location::where('tenant_id', $user->tenant_id)
+            ->where('department', 'store')
+            ->findOrFail($id);
+
+        $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'type' => 'sometimes|string|max:255',
+            'storeType' => 'sometimes|string|max:255',
+            'capacity' => 'sometimes|integer|min:1',
+            'description' => 'nullable|string',
+            'address' => 'nullable|string',
+        ]);
+
+        $location->update($request->only(['name', 'type', 'store_type', 'capacity', 'description', 'address']));
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id' => $user->id,
+            'action' => 'update',
+            'type' => 'location',
+            'description' => 'Updated store location: ' . $location->name,
+        ]);
+
+        return response()->json($location->loadCount('items'));
+    }
+
+    public function destroyLocation($id): JsonResponse
+    {
+        $user = request()->user();
+        if (!$user || $user->role_id !== 1) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $location = \App\Models\Location::where('tenant_id', $user->tenant_id)
+            ->where('department', 'store')
+            ->findOrFail($id);
+
+        if ($location->items()->exists()) {
+            return response()->json(['message' => 'Cannot delete location with items inside'], 422);
+        }
+
+        $name = $location->name;
+        $location->delete();
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id' => $user->id,
+            'action' => 'delete',
+            'type' => 'location',
+            'description' => 'Deleted store location: ' . $name,
+        ]);
+
+        return response()->json(['message' => 'Location deleted']);
+    }
+
+    // ==================== STORE SUPPLIERS ====================
+
+    public function suppliers(Request $request): JsonResponse
+    {
+        $tenantId = auth()->user()->tenant_id;
+        $suppliers = \App\Models\Supplier::where('tenant_id', $tenantId)->get();
+        return response()->json($suppliers);
+    }
+
+    public function storeSupplier(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user || $user->role_id !== 1) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'contact' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'notes' => 'nullable|string',
+        ]);
+
+        $supplier = \App\Models\Supplier::create([
+            'tenant_id' => $user->tenant_id,
+            'created_by' => $user->id,
+            'name' => $request->name,
+            'contact_person' => $request->contact ?? '',
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'address' => $request->address,
+            'notes' => $request->notes,
+            'is_active' => true,
+        ]);
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id' => $user->id,
+            'action' => 'create',
+            'type' => 'supplier',
+            'description' => 'Added store supplier: ' . $supplier->name,
+        ]);
+
+        return response()->json($supplier, 201);
+    }
+
+    public function updateSupplier(Request $request, $id): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user || $user->role_id !== 1) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $supplier = \App\Models\Supplier::where('tenant_id', $user->tenant_id)->findOrFail($id);
+
+        $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'contact' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|max:255',
+            'phone' => 'sometimes|string|max:255',
+            'address' => 'sometimes|string',
+            'notes' => 'sometimes|string',
+        ]);
+
+        $supplier->update($request->only(['name', 'contact_person', 'email', 'phone', 'address', 'notes']));
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id' => $user->id,
+            'action' => 'update',
+            'type' => 'supplier',
+            'description' => 'Updated store supplier: ' . $supplier->name,
+        ]);
+
+        return response()->json($supplier);
+    }
+
+    public function destroySupplier($id): JsonResponse
+    {
+        $user = request()->user();
+        if (!$user || $user->role_id !== 1) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $supplier = \App\Models\Supplier::where('tenant_id', $user->tenant_id)->findOrFail($id);
+        $name = $supplier->name;
+        $supplier->delete();
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id' => $user->id,
+            'action' => 'delete',
+            'type' => 'supplier',
+            'description' => 'Deleted store supplier: ' . $name,
+        ]);
+
+        return response()->json(['message' => 'Supplier deleted']);
+    }
+
+    // ==================== STORE SESSIONS/CALENDAR ====================
 
     public function audit(Request $request): JsonResponse
     {
@@ -267,5 +593,67 @@ class StoreController extends Controller
             ->get();
 
         return response()->json($logs);
+    }
+
+    public function quotations(Request $request): JsonResponse
+    {
+        return response()->json([]);
+    }
+
+    public function storeQuotation(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user || $user->role_id !== 1) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $quotation = $request->validate([
+            'quotation_id' => 'required|string',
+            'notes' => 'required|string',
+            'contact_details' => 'required|string',
+            'quotation_data' => 'required|array',
+            'quotation_data.items' => 'required|array',
+            'quotation_data.totalEstimatedCost' => 'required|numeric',
+            'quotation_data.createdDate' => 'required|string',
+            'quotation_data.createdBy' => 'required|string',
+        ]);
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id' => $user->id,
+            'action' => 'store_quotation',
+            'type' => 'store_quotation',
+            'description' => 'Created store quotation: ' . $quotation['quotation_id'],
+            'metadata' => [
+                'quotation_id' => $quotation['quotation_id'],
+                'total_cost' => $quotation['quotation_data']['totalEstimatedCost'],
+                'department' => 'Store',
+            ]
+        ]);
+
+        return response()->json([
+            'message' => 'Quotation created',
+            'quotation' => $quotation,
+        ], 201);
+    }
+
+    public function updateQuotation(Request $request, $id): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user || $user->role_id !== 1) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        return response()->json(['message' => 'Quotation updated']);
+    }
+
+    public function destroyQuotation($id): JsonResponse
+    {
+        $user = request()->user();
+        if (!$user || $user->role_id !== 1) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        return response()->json(['message' => 'Quotation deleted']);
     }
 }

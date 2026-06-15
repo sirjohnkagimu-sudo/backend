@@ -29,11 +29,13 @@ class SickbayStudent extends Model
         'chronic_conditions',
         'emergency_contact',
         'is_active',
+        'custom_fields',
     ];
 
     protected $casts = [
         'date_of_birth' => 'date',
         'is_active' => 'boolean',
+        'custom_fields' => 'array',
     ];
 
     // Relationship with visits

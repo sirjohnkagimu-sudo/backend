@@ -88,7 +88,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('suppliers', SupplierController::class);
     Route::apiResource('locations', LocationController::class);
     Route::apiResource('categories', CategoryController::class);
-    Route::apiResource('conditions', ConditionController::class);
+    // Route::apiResource('conditions', ConditionController::class); // disabled until controller dependencies are ready
     Route::apiResource('transactions', TransactionController::class);
     Route::apiResource('transaction-types', TransactionTypeController::class);
     Route::apiResource('stock-movements', StockMovementController::class);
@@ -216,12 +216,45 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // ==================== STORE ROUTES ====================
     Route::prefix('store')->group(function () {
-        Route::get('/', [StoreController::class, 'index']);
+        // Specific routes must come BEFORE the catch-all item routes
         Route::get('/categories', [StoreController::class, 'categories']);
+        Route::post('/categories', [StoreController::class, 'storeCategory']);
+
+        Route::get('/conditions', [StoreController::class, 'conditions']);
+        Route::post('/conditions', [StoreController::class, 'storeCondition']);
+
         Route::get('/transactions', [StoreController::class, 'transactions']);
         Route::post('/transactions', [StoreController::class, 'storeTransaction']);
+
         Route::get('/reports', [StoreController::class, 'reports']);
+
+        Route::get('/locations', [StoreController::class, 'locations']);
+        Route::post('/locations', [StoreController::class, 'storeLocation']);
+        Route::put('/locations/{id}', [StoreController::class, 'updateLocation']);
+        Route::delete('/locations/{id}', [StoreController::class, 'destroyLocation']);
+
+        Route::get('/suppliers', [StoreController::class, 'suppliers']);
+        Route::post('/suppliers', [StoreController::class, 'storeSupplier']);
+        Route::put('/suppliers/{id}', [StoreController::class, 'updateSupplier']);
+        Route::delete('/suppliers/{id}', [StoreController::class, 'destroySupplier']);
+
+        Route::get('/sessions', [StoreController::class, 'sessions']);
+        Route::post('/sessions', [StoreController::class, 'storeSession']);
+        Route::put('/sessions/{id}', [StoreController::class, 'updateSession']);
+        Route::delete('/sessions/{id}', [StoreController::class, 'destroySession']);
+
         Route::get('/audit', [StoreController::class, 'audit']);
+
+        Route::get('/quotations', [StoreController::class, 'quotations']);
+        Route::post('/quotations', [StoreController::class, 'storeQuotation']);
+        Route::put('/quotations/{id}', [StoreController::class, 'updateQuotation']);
+        Route::delete('/quotations/{id}', [StoreController::class, 'destroyQuotation']);
+
+        Route::get('/settings', [StoreController::class, 'settings']);
+        Route::put('/settings', [StoreController::class, 'updateSettings']);
+
+        // Items — catch-all routes last
+        Route::get('/', [StoreController::class, 'index']);
         Route::get('/{id}', [StoreController::class, 'show']);
         Route::post('/', [StoreController::class, 'store']);
         Route::put('/{id}', [StoreController::class, 'update']);
@@ -241,16 +274,23 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // ==================== SPORTS ROUTES ====================
     Route::prefix('sports')->group(function () {
-        Route::get('/', [SportsController::class, 'getSports']);
-        Route::get('/categories', [SportsController::class, 'getCategories']);
-        Route::get('/calendar', [SportsController::class, 'getCalendar']);
-        Route::post('/calendar', [SportsController::class, 'storeCalendar']);
-        Route::put('/calendar/{id}', [SportsController::class, 'updateCalendar']);
-        Route::delete('/calendar/{id}', [SportsController::class, 'destroyCalendar']);
-        Route::get('/{id}', [SportsController::class, 'getSportsById']);
-        Route::post('/', [SportsController::class, 'apiStore']);
-        Route::put('/{id}', [SportsController::class, 'apiUpdate']);
-        Route::delete('/{id}', [SportsController::class, 'apiDestroy']);
+    Route::get('/transactions', [SportsController::class, 'transactions']);
+    Route::post('/transactions', [SportsController::class, 'storeTransaction']);
+    Route::get('/reports', [SportsController::class, 'reports']);
+    Route::get('/audit', [SportsController::class, 'audit']);
+    Route::get('/audit-users', [SportsController::class, 'users']);
+
+    Route::get('/calendar', [SportsController::class, 'getCalendar']);
+    Route::post('/calendar', [SportsController::class, 'storeCalendar']);
+    Route::put('/calendar/{id}', [SportsController::class, 'updateCalendar']);
+    Route::delete('/calendar/{id}', [SportsController::class, 'destroyCalendar']);
+
+    Route::get('/', [SportsController::class, 'getSports']);
+    Route::get('/categories', [SportsController::class, 'getCategories']);
+    Route::post('/', [SportsController::class, 'apiStore']);
+    Route::get('/{id}', [SportsController::class, 'getSportsById']);
+    Route::put('/{id}', [SportsController::class, 'apiUpdate']);
+    Route::delete('/{id}', [SportsController::class, 'apiDestroy']);
     });
 
     // ==================== SICKBAY ROUTES ====================

@@ -27,6 +27,7 @@ class StoreItem extends Model
         'discount',
         'desc',
         'location_id',
+        'supplier_id',
     ];
 
     protected $casts = [
@@ -43,6 +44,11 @@ class StoreItem extends Model
     public function location()
     {
         return $this->belongsTo(Location::class);
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
     }
 
     public function scopeByTenant($query)

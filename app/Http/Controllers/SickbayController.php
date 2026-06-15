@@ -74,7 +74,6 @@ class SickbayController extends Controller
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',
             'gender' => 'required|string|in:male,female,other',
-            'date_of_birth' => 'required|date',
             'class' => 'nullable|string|max:50',
             'stream' => 'nullable|string|max:50',
             'parent_name' => 'nullable|string|max:200',
