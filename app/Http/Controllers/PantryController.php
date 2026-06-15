@@ -237,8 +237,11 @@ class PantryController extends Controller
     {
         $tenantId = auth()->user()->tenant_id;
 
+        $pantryItemIds = Pantry::where('tenant_id', $tenantId)->pluck('id');
+
         return response()->json([
             'transactions' => Transaction::where('tenant_id', $tenantId)
+                ->whereIn('item_id', $pantryItemIds)
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(fn ($tx) => [
