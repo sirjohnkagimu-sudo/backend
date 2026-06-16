@@ -29,6 +29,11 @@ class Transaction extends Model
         return $this->belongsTo(Item::class);
     }
 
+    public function storeItem()
+    {
+        return $this->belongsTo(StoreItem::class, 'item_id');
+    }
+
     public function school()
     {
         return $this->belongsTo(School::class, 'tenant_id');

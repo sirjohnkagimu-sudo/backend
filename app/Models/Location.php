@@ -27,9 +27,14 @@ class Location extends Model
         return $this->hasMany(Item::class);
     }
 
+    public function storeItems()
+    {
+        return $this->hasMany(StoreItem::class);
+    }
+
     public function getCurrentUsageAttribute()
     {
-        return $this->items()->count();
+        return $this->items()->count() + $this->storeItems()->count();
     }
 
     public function creator() {

@@ -183,9 +183,9 @@ class StoreController extends Controller
     {
         $tenantId = auth()->user()->tenant_id;
 
-        $query = Transaction::whereHas('item', function ($q) use ($tenantId) {
+        $query = Transaction::whereHas('storeItem', function ($q) use ($tenantId) {
             $q->where('tenant_id', $tenantId);
-        })->with(['item']);
+        })->with(['storeItem']);
 
         if ($request->filled('item_id')) {
             $query->where('item_id', $request->item_id);
@@ -236,7 +236,7 @@ class StoreController extends Controller
             ],
         ]);
 
-        return response()->json($transaction->load('item'), 201);
+        return response()->json($transaction->load('storeItem'), 201);
     }
 
     // ==================== REPORTS ====================
