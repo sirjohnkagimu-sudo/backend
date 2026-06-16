@@ -134,6 +134,7 @@ class StoreController extends Controller
             'discount' => 'nullable|numeric|min:0',
             'desc' => 'nullable|string',
             'location_id' => 'nullable|integer',
+            'supplier_id' => 'nullable|integer|exists:suppliers,id',
         ]);
 
         $item->update($validated);
