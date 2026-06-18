@@ -32,7 +32,7 @@ class Pantry extends Model
     ];
 
     protected $casts = [
-        'expiry_date' => 'datetime:H:i',
+        'expiry_date' => 'date:Y-m-d',
         'is_active' => 'boolean',
         'quantity' => 'integer',
     ];
