@@ -248,7 +248,7 @@ class PantryController extends Controller
                     'id' => $tx->id,
                     'type' => $tx->type,
                     'quantity' => $tx->quantity,
-                    'item' => $tx->item ? ['name' => $tx->item->name, 'department' => 'Pantry'] : null,
+                    'item' => $tx->pantryItem ? ['name' => $tx->pantryItem->name, 'department' => 'Pantry'] : null,
                     'created_at' => $tx->created_at,
                     'meal_served' => $tx->meal_served ?? null,
                     'number_served' => $tx->number_served ?? null,
@@ -275,7 +275,43 @@ class PantryController extends Controller
 
         $transaction = Transaction::create($validated);
 
-        return response()->json($transaction->load('item'), 201);
+        return response()->json($transaction->load('pantryItem'), 201);
+    }
+
+    public function sendQuotation(Request $request): JsonResponse
+    {
+        $request->validate([
+            'quotation_id' => 'required|string',
+            'notes' => 'nullable|string',
+            'contact_details' => 'nullable|string',
+            'quotation_data' => 'required|array',
+            'quotation_data.items' => 'required|array',
+            'quotation_data.totalEstimatedCost' => 'required|numeric',
+            'quotation_data.createdDate' => 'required|string',
+            'quotation_data.createdBy' => 'required|string',
+        ]);
+
+        $user = $request->user();
+
+        ActivityLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id' => $user->id,
+            'action' => 'send',
+            'type' => 'quotation',
+            'description' => 'Sent pantry quotation request',
+            'metadata' => [
+                'quotation_id' => $request->quotation_id,
+                'items_count' => count($request->quotation_data['items']),
+                'total_cost' => $request->quotation_data['totalEstimatedCost'],
+            ],
+        ]);
+
+        return response()->json([
+            'message' => 'Quotation request recorded',
+            'quotation_id' => $request->quotation_id,
+            'items_count' => count($request->quotation_data['items']),
+            'total_cost' => $request->quotation_data['totalEstimatedCost'],
+        ]);
     }
 
     public function itemsStore(Request $request): JsonResponse
@@ -372,13 +408,19 @@ class PantryController extends Controller
     {
         $tenantId = auth()->user()->tenant_id;
 
+        $period = $request->query('period', 'weekly');
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        $start = $this->resolvePeriodStart($period, $startDate);
+        $end = $this->resolvePeriodEnd($period, $endDate);
+
         $items = Pantry::where('tenant_id', $tenantId)->get();
+        $transactions = Transaction::where('tenant_id', $tenantId)
+            ->whereBetween('created_at', [$start, $end])
+            ->get();
 
-        $totalItems = $items->count();
         $lowStockItems = $items->filter(fn ($item) => $item->quantity <= $item->min_quantity)->values();
-        $totalValue = (float) $items->sum(fn ($item) => ($item->quantity ?? 0) * ($item->unit_cost ?? 0));
-        $overStockedItems = $items->filter(fn ($item) => $item->max_quantity && ($item->quantity ?? 0) > $item->max_quantity)->values();
-
         $topConsumedItems = $items->map(fn ($item) => [
             'name' => $item->name,
             'quantity' => $item->quantity ?? 0,
@@ -388,13 +430,17 @@ class PantryController extends Controller
             ->take(5)
             ->values();
 
+        $totalWastage = $transactions->where('type', 'disposal')->sum('quantity');
+        $totalItemsConsumed = $transactions->where('type', 'consumption')->sum('quantity');
+        $totalItemsPurchased = $transactions->where('type', 'purchase')->sum('quantity');
+
         return response()->json([
             'totalMealsServed' => 0,
             'totalPaxServed' => 0,
-            'totalItemsConsumed' => (int) $items->sum('quantity'),
-            'totalItemsPurchased' => 0,
-            'totalWastage' => 0,
-            'totalCost' => $totalValue,
+            'totalItemsConsumed' => (int) ($totalItemsConsumed ?: $items->sum('quantity')),
+            'totalItemsPurchased' => (int) $totalItemsPurchased,
+            'totalWastage' => (int) $totalWastage,
+            'totalCost' => (float) $items->sum(fn ($item) => ($item->quantity ?? 0) * ($item->unit_cost ?? 0)),
             'avgCostPerPax' => 0,
             'topConsumedItems' => $topConsumedItems,
             'lowStockItems' => $lowStockItems->map(fn ($item) => [
@@ -403,6 +449,34 @@ class PantryController extends Controller
                 'minThreshold' => $item->min_quantity ?? 0,
             ])->values(),
         ]);
+    }
+
+    private function resolvePeriodStart(string $period, ?string $startDate): string
+    {
+        if ($startDate) {
+            return $startDate . ' 00:00:00';
+        }
+
+        $now = now();
+        return match ($period) {
+            'monthly' => $now->startOfMonth()->toDateTimeString(),
+            'termly' => $now->subMonths(3)->startOfMonth()->toDateTimeString(),
+            default => $now->startOfWeek()->toDateTimeString(),
+        };
+    }
+
+    private function resolvePeriodEnd(string $period, ?string $endDate): string
+    {
+        if ($endDate) {
+            return $endDate . ' 23:59:59';
+        }
+
+        $now = now();
+        return match ($period) {
+            'monthly' => $now->endOfMonth()->toDateTimeString(),
+            'termly' => $now->endOfMonth()->toDateTimeString(),
+            default => $now->endOfWeek()->toDateTimeString(),
+        };
     }
 
     public function storageLocations(Request $request): JsonResponse

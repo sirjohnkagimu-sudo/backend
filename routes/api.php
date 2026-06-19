@@ -207,6 +207,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Storage locations - must come BEFORE the /{pantry} route
         Route::get('/storage-locations', [PantryController::class, 'storageLocations']);
 
+        // Quotations
+        Route::post('/quotations/send', [PantryController::class, 'sendQuotation']);
+        Route::get('/quotations', [PantryController::class, 'quotations']);
+        Route::post('/quotations', [PantryController::class, 'storeQuotation']);
+
         // Pantry management - must come AFTER specific routes
         Route::post('/', [PantryController::class, 'store']);
         Route::get('/{pantry}', [PantryController::class, 'show']);

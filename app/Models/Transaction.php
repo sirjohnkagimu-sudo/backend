@@ -38,4 +38,9 @@ class Transaction extends Model
     {
         return $this->belongsTo(School::class, 'tenant_id');
     }
+
+    public function pantryItem()
+    {
+        return $this->belongsTo(Pantry::class, 'item_id');
+    }
 }
