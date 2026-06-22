@@ -191,7 +191,7 @@
                           <strong>The Edumall Uganda Team</strong>
                         </p>
                         <p class="contact-info">
-                          Email: support@edumallug.com | Tel: +256 781 978 910<br>
+                          Email: edumallug@gmail.com | Tel: +256 781 978 910<br>
                           Your trusted education partner
                         </p>
                       </div>
