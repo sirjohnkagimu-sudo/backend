@@ -43,7 +43,7 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception): JsonResponse|\Symfony\Component\HttpFoundation\Response
     {
-        if ($request->expectsJson() || $request->is('api/*')) {
+        if ($request->expectsJson() || $request->is('api/*') || $request->wantsJson()) {
 
             // Handle validation exceptions separately
             if ($exception instanceof ValidationException) {
@@ -64,8 +64,28 @@ class Handler extends ExceptionHandler
             // Default fallback for other exceptions
             return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage(),
+                    'message' => $exception->getMessage(),
                 ], 500);
+        }
+
+        // For web routes (non-API), fallback to parent
+        return parent::render($request, $exception);
+    }
+
+            // Handle HTTP exceptions (404, 403, etc.)
+            if ($exception instanceof HttpExceptionInterface) {
+                return response()->json([
+                    'message' => $exception->getMessage() ?: 'HTTP Error',
+                    'status' => $exception->getStatusCode(),
+                ], $exception->getStatusCode());
+            }
+
+            // Default fallback for other exceptions
+            return response()->json([
+                    'success' => false,
+                    'message' => $exception->getMessage(),
+                ], 500);
+            // force opcache reload 2026-06-23 pantries fix
         }
 
         // For web routes (non-API), fallback to parent

@@ -178,6 +178,7 @@ class SportsController extends Controller
             'discount' => 'nullable|numeric|min:0',
             'desc' => 'nullable|string|max:1000',
             'location_id' => 'nullable|integer',
+            'supplier_id' => 'nullable|integer',
         ]);
 
         $tenantId = auth()->user()->tenant_id;
@@ -202,6 +203,7 @@ class SportsController extends Controller
             'discount' => $sports->discount,
             'desc' => $sports->desc,
             'location_id' => $sports->location_id,
+            'supplier_id' => $sports->supplier_id,
             'created_at' => $sports->created_at,
             'updated_at' => $sports->updated_at,
         ], 201);
@@ -227,6 +229,7 @@ class SportsController extends Controller
             'discount' => 'nullable|numeric|min:0',
             'desc' => 'nullable|string|max:1000',
             'location_id' => 'nullable|integer',
+            'supplier_id' => 'nullable|integer',
         ]);
 
         $sports->update($validated);
@@ -243,6 +246,7 @@ class SportsController extends Controller
             'discount' => $sports->discount,
             'desc' => $sports->desc,
             'location_id' => $sports->location_id,
+            'supplier_id' => $sports->supplier_id,
             'updated_at' => $sports->updated_at,
         ]);
     }

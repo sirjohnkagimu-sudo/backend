@@ -316,27 +316,36 @@ class PantryController extends Controller
 
     public function itemsStore(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:255',
-            'category' => 'nullable|string|max:255',
-            'supplier' => 'nullable|string|max:255',
-            'location' => 'nullable|string|max:255',
-            'quantity' => 'required|integer|min:0',
-            'min_quantity' => 'required|integer|min:0',
-            'max_quantity' => 'nullable|integer|min:0',
-            'expiry_date' => 'nullable|date',
-            'unit' => 'nullable|string|max:50',
-            'unit_cost' => 'nullable|numeric|min:0',
-            'total_value' => 'nullable|numeric|min:0',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'code' => 'nullable|string|max:255',
+                'category' => 'nullable|string|max:255',
+                'supplier' => 'nullable|string|max:255',
+                'location' => 'nullable|string|max:255',
+                'quantity' => 'required|integer|min:0',
+                'min_quantity' => 'required|integer|min:0',
+                'max_quantity' => 'nullable|integer|min:0',
+                'expiry_date' => 'nullable|date',
+                'unit' => 'nullable|string|max:50',
+                'unit_cost' => 'nullable|numeric|min:0',
+                'total_value' => 'nullable|numeric|min:0',
+            ]);
 
-        $validated['tenant_id'] = auth()->user()->tenant_id;
+            $validated['tenant_id'] = auth()->user()->tenant_id;
 
-        return response()->json(
-            Pantry::create($validated),
-            201
-        );
+            return response()->json(
+                Pantry::create($validated),
+                201
+            );
+        } catch (\Throwable $e) {
+            \Log::error('PANTRY itemsStore error: ' . $e->getMessage() . ' | trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ], 500);
+        }
     }
 
     public function itemsShow(Pantry $pantryItem): JsonResponse

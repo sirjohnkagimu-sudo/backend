@@ -25,6 +25,7 @@ class Sports extends Model
         'discount',
         'desc',
         'location_id',
+        'supplier_id',
     ];
 
     protected $casts = [
